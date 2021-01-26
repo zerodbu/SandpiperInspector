@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 /*
  * to-do list 
- *      popup slice selector when an un-assigned grain is discovered 
+ *      thwart the human's ability to drop in grains if the node is a secondary 
  */
 
 
