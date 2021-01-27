@@ -121,9 +121,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 15);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(118, 17);
+            this.label1.Size = new System.Drawing.Size(113, 17);
             this.label1.TabIndex = 4;
-            this.label1.Text = "Server Base URL";
+            this.label1.Text = "Server Base UrL";
             // 
             // label2
             // 
