@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Plan xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uuid="dd84a823-ebe2-48cd-8ddd-601ab7db87f4">
+  <Primary uuid="012946d0-1a10-4412-9044-bdff668ef2dc">
+    <Instance uuid="0e05c810-8fe1-40bb-ba4a-aabfa74c7c0c">
+      <Software description="Part Magic" version="2025-10.12A"/>
+      <Capability level="2">
+        <Response uri="zUj" role="Authentication" description="r_AD1j.atV4MLAWU"/>
+      </Capability>
+    </Instance>
+    <Controller uuid="9dcbc4bb-ee7f-4e4b-8c3c-b3bed1f296ee" description="a.bGJ7IJ1AK6ozmG6BrUoUSwnrIxEKIhykHpoEwOz7YLO1_Q_NHxVfn9eexF0_dmBHCEkZsN">
+      <Admin contact="add9AlTjTni8P2" email="@Î@Ã"/>
+    </Controller>
+    <Links>
+      <UniqueLink uuid="2d9c0bef-5a75-4f61-98bf-1b48dae06eb3" keyfield="auto-care-padb-version" keyvalue="2025-01-27" description="Example Description"/>
+      <UniqueLink uuid="bbad2df7-feb9-4efd-9cca-20b84eba9b6f" keyfield="auto-care-pcdb-version" keyvalue="2025-01-27" description="Example Description"/>
+      <UniqueLink uuid="41524659-9ecc-4e0a-9f25-ee7e9fee6f94" keyfield="auto-care-qdb-version" keyvalue="2025-01-27" description="Example Description"/>
+      <MultiLink keyfield="auto-care-pcdb-partterminology">
+        <MultLinkEntry uuid="6db185dc-207c-4b0d-8dba-bd4e2cf9523f" keyvalue="2352324141" description="V6eM.-N01OQxZ"/>
+        <MultLinkEntry uuid="eb075ee8-e2fc-454c-8ea8-3e35bd7cb9fc" keyvalue="1" description="tL-W-FiV7M9Fhg3yHeVlAEykRb3MSet3"/>
+        <MultLinkEntry uuid="cebafea0-421b-4dba-8b9e-d9cb60ce41de" keyvalue="555" description="CruRM9S08.fP3YHnW0Nwk3wI0kglGiDsU36FuB2cxPxbr3mq1D58DffcMkxwSYTwY2hZjYdd1VonCrUmiaAc5Avqxk"/>
+        <MultLinkEntry uuid="d31f224c-9ace-4f6b-89d5-5bab0a967b3d" keyvalue="555332" description="mm1hQONSqtCpXE6wwI3S5-IWz7fvcvv8FT4NLQlqD8.wluucSUk6cxJY6DagWzlI0_q7VnUhajIBMSqToEF4SaknOYFap53vcQaj4Md5B"/>
+      </MultiLink>
+      <MultiLink keyfield="auto-care-branding-brand">
+        <MultLinkEntry uuid="e08c3326-cc69-4205-bea8-e2acf247e2df" keyvalue="3333" description="uQA90KYtJkVOKmSWXhIs"/>
+        <MultLinkEntry uuid="e2a0c4fa-f7bb-4f42-8c38-31f9e1d2f4b9" keyvalue="3333" description="fKdjXKBERb3Yb2hgKzxYEoouFbNfCItEXeyF7ssQ61NBpPEBSA1"/>
+        <MultLinkEntry uuid="bfdc0178-eb5c-4e62-b3b6-2c1c5d8333c4" keyvalue="555" description="ephMbu39Be2EA2XNEg78Hbyng5siLf.hNHAZFJM7xQ:JfxSB0xcdyRAp_tBLsPuBcP_XZ2Lz-rXe.xeHz79eDEkeNj:trG"/>
+        <MultLinkEntry uuid="cac4c74c-79f7-401a-95d4-ab83df222f86" keyvalue="555332" description="LKyBsLXbx0yYNX_vKUo3mUElU13x"/>
+      </MultiLink>
+    </Links>
+    <Pools>
+      <Pool uuid="10b82ac3-0808-4815-a27e-c795dee58fe5" description="WAJVsU-hCF8nsnsAyK3QUouQbrjMr6eDUwfBOzLTt_mMpDpPUkSwopy1XTm9eYYrVFB8vvlixqXAPW81oXmGc-4fM5OMnCg2-xbmyxb7gLA3BKxv6IF24oWkfxOB9QAjtwZ9iIBUt">
+        <Links>
+          <UniqueLink uuid="c76bcae3-0ed3-45a3-ad02-887c8afb0d7d" keyfield="napa-translation-version" keyvalue="2025-01-27" description="Example Description"/>
+          <UniqueLink uuid="7fb0369e-4a67-4bd3-8c98-66b233d7be52" keyfield="auto-care-vcdb-version" keyvalue="2025-01-27" description="Example Description"/>
+          <UniqueLink uuid="792886a9-2d7e-484d-894c-930e8bf4f773" keyfield="auto-care-pcdb-version" keyvalue="2025-01-27" description="Example Description"/>
+          <MultiLink keyfield="auto-care-branding-brand">
+            <MultLinkEntry uuid="9ffd7eed-3ff3-4f99-899b-8dce3d8fa7c8" keyvalue="32321" description="TYBe4bFU2W8YrB4BtANCtq.QeINjpg4bZwN9T4VDyYIrE"/>
+            <MultLinkEntry uuid="9579c780-f7ea-40ae-9fbe-11e88c1baf77" keyvalue="32321" description="JFvKKCQhhfR-PBtkbgPFPRl_z.m70abf8n1t"/>
+            <MultLinkEntry uuid="d2d8affe-a490-49b0-96e7-bb7f7106ac1a" keyvalue="432" description="ia5rmGSii03CnzBjOv.vEm7djTooJ0FFKu6sLOoi7.V8F6fmTaN9UTPY-6B3wxhFOP_3.vN7GF-DlivRuv5hTqC_dFY41z.n7SN"/>
+            <MultLinkEntry uuid="cc5678b8-c623-4098-b361-603aab3bbdce" keyvalue="555" description="L0GgvL7VrsbRL24gC6avHcJaeMKoT"/>
+          </MultiLink>
+          <MultiLink keyfield="auto-care-pcdb-partterminology">
+            <MultLinkEntry uuid="15ae343a-fdda-4040-839d-4ae481444f46" keyvalue="555332" description="u3S512FAJat7Yj47ZS9ly22w3arIY5"/>
+            <MultLinkEntry uuid="359f9eb7-c1dd-45ac-b5a7-7dbce81a2bbd" keyvalue="432" description="BmsDtFDeyKPz6f2Wg7yjwN5QqI78vUuM6wDZjqqwExKx-MOJOt.hFy_R7rQ8Jez7CMn_nNh178NqL_L8ZdlnflkljDAW7i1feD4J6-gYDhvtO"/>
+            <MultLinkEntry uuid="e804cc0c-ea06-4fee-be19-e2c54d3f071d" keyvalue="3333" description="fT_BWS"/>
+            <MultLinkEntry uuid="c07bbc3b-8fce-47ca-961d-1682f3aeebb9" keyvalue="1" description="w"/>
+          </MultiLink>
+        </Links>
+        <Slices>
+          <Slice uuid="a4380ad7-31a7-4f31-864d-4c8de746ad6f" description="Wsa2Xlf">
+            <Links>
+              <UniqueLink uuid="d8fef513-c3ee-4cc2-aac7-2dfac57ae270" keyfield="auto-care-qdb-version" keyvalue="2025-01-27" description="Example Description"/>
+              <UniqueLink uuid="dc476fb4-bff9-4b8c-9d8c-7a75f8d0a9b9" keyfield="napa-validvehicles-version" keyvalue="2025-01-27" description="Example Description"/>
+              <MultiLink keyfield="auto-care-pcdb-partterminology">
+                <MultLinkEntry uuid="cad1f201-05bd-49ac-bf03-fc3cb568ab19" keyvalue="432" description="buFgcBtv9v:KJ1eJ"/>
+                <MultLinkEntry uuid="abe8b99e-9fec-4c00-a32f-c924accfafcc" keyvalue="432" description="GHciU"/>
+                <MultLinkEntry uuid="42d55df4-7959-4f6d-aee0-9f4f94b9ccba" keyvalue="1" description="HKYpyKy0kcYSXP4bXe90U1g1x7WhyqaCyJ60fZAPdH55.AmR:gzGBdMLMO"/>
+                <MultLinkEntry uuid="dd174f30-b8f1-4004-bd3b-fabc98c81dce" keyvalue="1" description="JfEI9Q4L8UB7jTCoaukJvksNaMmy1n83.wVL0njTz11tHSqR.9H1APCpq.y4v8SgDsLBg-62SmPX7IoHoQsf-zKoBKlVJ"/>
+              </MultiLink>
+              <MultiLink keyfield="auto-care-branding-subbrand">
+                <MultLinkEntry uuid="df4abacd-71d2-4f54-a1b8-82349a862bdf" keyvalue="432" description="jKwBF1ncvPBv9nD-NGOs"/>
+                <MultLinkEntry uuid="a30dffe8-d872-422a-9bb6-8aeaea6833b7" keyvalue="432" description="dGCkjemreQtSF"/>
+                <MultLinkEntry uuid="cf5b80ea-c1c1-47aa-a9ce-f80c0d88843a" keyvalue="32321" description="ofR5sUGOLJKMiJA83jjGJRJA"/>
+                <MultLinkEntry uuid="a569cd44-7db2-4ccd-901b-f777b9244dcd" keyvalue="555" description="I2.37DkYET0jEnPb3GVlJD.UU1nHIt5vc5_ji"/>
+              </MultiLink>
+            </Links>
+          </Slice>
+        </Slices>
+      </Pool>
+    </Pools>
+  </Primary>
+  <Communal>
+    <Subscriptions>
+      <Subscription uuid="85dab85a-5867-42c9-a191-3c6354f1d9b7">
+      </Subscription>
+      <Subscription uuid="5fe97b00-e632-4ce7-80ca-c3d7b7dbc022">
+      </Subscription>
+      <Subscription uuid="486ff241-96ae-4d3f-aad9-c746dad53aed">
+      </Subscription>
+    </Subscriptions>
+  </Communal>
+  <Secondary uuid="eeeede5f-11d3-4b83-8430-7e774e33b8da">
+    <Instance uuid="0a7ca190-eaf7-459d-8309-f4878f85c7e9">
+      <Software description="Part Magic" version="2025-10.12A"/>
+      <Capability level="2">
+        <Response uri="nkzLyPaK1GkW.Y" role="Authentication" description="GJLm5axooO5OxDgqZ6V0udwVb5jc"/>
+      </Capability>
+    </Instance>
+    <Links>
+      <UniqueLink uuid="3b9ba8a9-182c-4dee-bcda-14832a4db1d1" keyfield="auto-care-padb-version" keyvalue="2025-01-27" description="Example Description"/>
+      <UniqueLink uuid="ac9be88b-ec1f-4ac5-ab8a-cddc8f47ab5e" keyfield="auto-care-pcdb-version" keyvalue="2025-01-27" description="Example Description"/>
+      <MultiLink keyfield="auto-care-branding-brand">
+        <MultLinkEntry uuid="01a81c0d-2f8b-4b3b-8aed-c6bc23acdaf1" keyvalue="555" description="G6QPAsk1.RuhxnGmbeI2VVgW_G4pH_mSX3s8Kg_IRoy.AHjZJSImT2om5D2KLKCrY"/>
+        <MultLinkEntry uuid="4db5bedd-4bda-44fb-8fe7-cea34c9de6b2" keyvalue="432" description="XUko_0dZ7oj95C"/>
+        <MultLinkEntry uuid="6b008209-264a-483d-b480-7c003cded104" keyvalue="555332" description="n-2SsinPqoK1meRJdzte4faodA3R5YrEmcPid6dET"/>
+        <MultLinkEntry uuid="ec0b86f2-0f7d-4b5a-8293-d195895d5725" keyvalue="555" description="psz30b2_2Vqjnwsu1NW-3gBBq81rzL4dU2CuB6EpFg_Ovoy4O_QhJTA"/>
+      </MultiLink>
+      <MultiLink keyfield="auto-care-branding-subbrand">
+        <MultLinkEntry uuid="b0f8dbb2-21b0-4f1b-9a3f-290d0c86bddf" keyvalue="32321" description="v8L6FXThKw7gOh72gFr2_NZOF-0rXmtopuI9CUtHJwxI44hTFcq9mE689txudyQ.B05ZTpvnBGOwzzsCRwQCKEnqk7Zf5hKaq8efKKyZKwxbcQLpe8Qh4E_yqZA82Hrh2b96YALx-SOC.ePApgyEgdXXuUkqMISwi9tVrWxd_cn9mhWJpKKhJi439J3dX8TG5dVK.LKfSd6R.XuHwGVyhnP5uPPk"/>
+        <MultLinkEntry uuid="d1ad94b5-8e78-4bc0-89ef-caa92fd0b3fd" keyvalue="32321" description="JFKAa1Yo7ZcPxCH7MC4avHJm8kYHk0Mi-H-TxONnGTRGOR39mMmszVPwD"/>
+        <MultLinkEntry uuid="fd09d3eb-dca8-4d7f-acf2-8d0ddb2ad79e" keyvalue="432" description="LtQG9kZCKAocwrf2aEOJK.VgR:9bNmLaS6Hpzwgx8aEEavYq7qR_:HuJ:S-s.fxmD2U:Ytyo75Dt60z8.8NR7rcbRpPk60-t3Ah4RxPHPqzSka9DkuWj67kjS6tLb4nTFTfeIBEfXzG.Mg1-bBni8T5UfDpMvYXSK_oxFmcbHJyCW343.6rHOj6znHAEsmDeIivh.SdSG22bwEg.IRYLM_yQXcjXWnbHKmIffDD1"/>
+        <MultLinkEntry uuid="0f8f75dd-93ad-4273-a4e3-9869b9660763" keyvalue="1" description="WpswNJIKd2nievZGYoscPcs88FTDosxQBC8EN"/>
+      </MultiLink>
+    </Links>
+  </Secondary>
+</Plan>
