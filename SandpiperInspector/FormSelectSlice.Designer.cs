@@ -72,6 +72,7 @@
             this.checkBoxApplyToAll.TabIndex = 3;
             this.checkBoxApplyToAll.Text = "Put all unassigned grains in this slice";
             this.checkBoxApplyToAll.UseVisualStyleBackColor = true;
+            this.checkBoxApplyToAll.Visible = false;
             // 
             // FormSelectSlice
             // 

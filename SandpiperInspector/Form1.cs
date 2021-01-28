@@ -8,7 +8,9 @@ using System.Windows.Forms;
 
 /*
  * to-do list 
- *      thwart the human's ability to drop in grains if the node is a secondary 
+ *      include the grain filename on the slice selector popup when a new grain is discovered
+ *      thwart the human's ability to drop in grains if the node is a secondary
+ *      
  */
 
 
@@ -1302,15 +1304,25 @@ namespace SandpiperInspector
 
         }
 
-        public string getUserSliceSelection()
+        public string getUserSliceSelection(string grainDescription, string lastUserSelectedSliceID)
         {
             string returnValue = "";
             //show slice slector form if 
             using (FormSelectSlice f = new FormSelectSlice())
             {
+                f.headline = grainDescription;
+                int i = 0;
+
                 foreach (sandpiperClient.slice s in sandpiper.localSlices)
                 {
+                    
                     f.listItemString = s.slice_id + "\t" + s.name;
+                    if (s.slice_id == lastUserSelectedSliceID)
+                    {
+                        f.sliceSelectedIndex = i;
+                    }
+
+                    i++;
                 }
 
                 f.ShowDialog(this);
@@ -1350,6 +1362,7 @@ namespace SandpiperInspector
             try
             {
                 DirectoryInfo d = new DirectoryInfo(cacheDir);
+                string lastUserSelectedSliceID = "";
 
                 FileInfo[] Files = d.GetFiles("*.*");
                 foreach (FileInfo file in Files)
@@ -1362,7 +1375,8 @@ namespace SandpiperInspector
                         newGrain.id = Guid.NewGuid().ToString("D");
                         newGrain.source = file.Name;
                         //newGrain.slice_id = "00000000-0000-0000-0000-000000000000";
-                        newGrain.slice_id = getUserSliceSelection();
+                        newGrain.slice_id = getUserSliceSelection("New grain ("+ file.Name + ") must be assigned to a slice", lastUserSelectedSliceID);
+                        lastUserSelectedSliceID = newGrain.slice_id;
                         sandpiper.localGrainsCache.Add(newGrain);
                         sandpiper.writeFullCacheIndex(cacheDir);
                         sandpiper.historyRecords.Add("Local file (" + file.Name + ") is not in the cache index. Adding it with new grain ID " + newGrain.id + " in slice " + newGrain.slice_id);

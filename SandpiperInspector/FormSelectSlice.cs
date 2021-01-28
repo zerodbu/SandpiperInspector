@@ -23,11 +23,12 @@ namespace SandpiperInspector
         public string headline { set {label1.Text=value; } }
 
         public string selectedSliceText { get { return listBoxSlices.Items[listBoxSlices.SelectedIndex].ToString(); } }
+
+        public int sliceSelectedIndex { get { return listBoxSlices.SelectedIndex; }  set { listBoxSlices.SelectedIndex = value; } }        
         
         public string listItemString { set { listBoxSlices.Items.Add(value); } }
 
         public bool applyAll { get { return checkBoxApplyToAll.Checked; } }
-
 
 
         public FormSelectSlice()
@@ -38,10 +39,10 @@ namespace SandpiperInspector
         private void FormSelectSlice_Load(object sender, EventArgs e)
         {
             resizeControls();
-            if (listBoxSlices.Items.Count > 0)
-            {
-                listBoxSlices.SelectedIndex = 0;
-            }
+            //if (listBoxSlices.Items.Count > 0)
+            //{
+            //    listBoxSlices.SelectedIndex = 0;
+            //}
         }
 
         private void buttonOk_Click(object sender, EventArgs e)
