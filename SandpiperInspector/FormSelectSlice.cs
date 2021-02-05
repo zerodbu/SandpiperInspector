@@ -38,6 +38,7 @@ namespace SandpiperInspector
 
         private void FormSelectSlice_Load(object sender, EventArgs e)
         {
+            
             resizeControls();
             //if (listBoxSlices.Items.Count > 0)
             //{

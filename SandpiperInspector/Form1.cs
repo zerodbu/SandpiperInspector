@@ -304,7 +304,7 @@ namespace SandpiperInspector
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGGRAINS_AWAITING;
                         sandpiper.awaitingServerResponse = true;
                         sandpiper.responseTime = 0;
-                        sandpiper.availableGrains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains", sandpiper.sessionJTW);
+                        sandpiper.availableGrains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
                         sandpiper.awaitingServerResponse = false;
                         sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableGrains.Count() + " grains without payloads (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
                     }
@@ -334,7 +334,7 @@ namespace SandpiperInspector
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN_AWAITING;
                                         
                     List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
-                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?payload=yes", sandpiper.sessionJTW);
+                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
                     if (grains.Count() == 1 && grains[0].id == sandpiper.grainsToTransfer.First().id)
                     {
                         sandpiper.writeFilegrainToFile(grains[0], lblLocalCacheDir.Text);
@@ -1422,7 +1422,6 @@ namespace SandpiperInspector
             return updateIndex;
         }
 
-
         public bool readCacheIndex(string cacheDir)
         {
             // verify all the grains in the index (that they actually exist) and remove records if their file is not found
@@ -1441,13 +1440,14 @@ namespace SandpiperInspector
                 foreach (string line in lines)
                 {
                     string[] fields = line.Split('\t');
-                    if (fields.Count() == 4 && sandpiper.looksLikeAUUID(fields[0]))
+                    if (fields.Count() == 5 && sandpiper.looksLikeAUUID(fields[0]))
                     {
                         sandpiperClient.slice s = new sandpiperClient.slice();
                         s.slice_id = fields[0];
                         s.slice_type = fields[1];
                         s.name = fields[2];
                         s.slicemetadata = fields[3];
+                        s.grainidsHash = fields[4];
                         sandpiper.localSlices.Add(s);
                         if (!sliceidKeyedNames.ContainsKey(s.slice_id)) { sliceidKeyedNames.Add(s.slice_id, s.name); }
                     }

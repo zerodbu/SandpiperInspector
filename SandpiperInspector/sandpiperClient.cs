@@ -109,6 +109,7 @@ namespace SandpiperInspector
             public string slice_type;
             public string name;
             public string slicemetadata;
+            public string grainidsHash; // md5sum of grain uuid concatenated
             public List<grain> grains;
 
             public void clear()
@@ -126,6 +127,14 @@ namespace SandpiperInspector
         {
             public List<grain> grains;
         }
+
+        public class grainsEnvelopeCompact
+        {
+            public List<string> grainuuids;
+        }
+
+
+
 
         public class grainsResponse
         {
@@ -224,6 +233,7 @@ namespace SandpiperInspector
         {
             List<grain> grainsList = new List<grain>();
             grainsEnvelope responseData = new grainsEnvelope();
+            grainsEnvelopeCompact responseDataCompact = new grainsEnvelopeCompact();
             grain myGrain = new grain();
 
             responseData.grains = grainsList;
@@ -491,61 +501,6 @@ namespace SandpiperInspector
 
 
 
-
-
-
-
-        //public bool indexLocalFiles(string cacheDir)
-        //{// roll through all files found in the local cache directory and add them to the index if they are not already there.
-        //    // return ture if a file was added to the cacheindex
-
-        //    bool updateIndex=false;
-        //    Dictionary<string, string> indexedFilenames = new Dictionary<string, string>();
-            
-        //    foreach (grain localGrain in localGrainsCache)
-        //    {
-        //        if (!indexedFilenames.ContainsKey(localGrain.source))
-        //        {
-
-        //            indexedFilenames.Add(localGrain.source, localGrain.id);
-        //        }
-        //    }
-
-        //    //indexedFilenames now contains filename-keyed list of what the cache index has
-
-        //    try
-        //    {
-        //        DirectoryInfo d = new DirectoryInfo(cacheDir);
-
-        //        FileInfo[] Files = d.GetFiles("*.*");
-        //        foreach (FileInfo file in Files)
-        //        {
-        //            if (file.Name == "grainlist.txt" || file.Name == "slicelist.txt") { continue; }
-        //            if (!indexedFilenames.ContainsKey(file.Name))
-        //            { // our cacheindex is not aware of this file
-
-        //                grain newGrain = new grain();
-        //                newGrain.id = Guid.NewGuid().ToString("D");
-        //                newGrain.source = file.Name;
-        //                newGrain.slice_id = "00000000-0000-0000-0000-000000000000";
-        //                localGrainsCache.Add(newGrain);
-        //                writeFullCacheIndex(cacheDir);
-        //                historyRecords.Add("Local file (" + file.Name + ") is not in the cache index. Adding it with new grain ID " + newGrain.id + " in slice " + newGrain.slice_id);
-        //                updateIndex = true;
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        historyRecords.Add("Error in indexLocalFiles("+cacheDir+"):" + ex.Message);
-        //    }
-        //    return updateIndex;
-        //}
-
-
-
-
-
         public string reUUIDslice(string slice_id)
         {
             string new_id = Guid.NewGuid().ToString("D"); // just in case we need one
@@ -742,12 +697,19 @@ namespace SandpiperInspector
         }
 
 
+
         public bool writeFullCacheIndex(string cacheDir)
-        {// tab-delimited list of: grainid,sliceid,filename
-            // grains index and slice index
+        {
+            // rebuild (from scratch) the local grains list and slice list files from what is memory resident (localGrainsCache and localSlices
+
+
+            // grain index file format: tab-delimited list of: grainid,sliceid,filename
 
             bool grainsSuccess = false;
             bool slicesSuccess = false;
+
+            
+
 
             try
             {
@@ -769,9 +731,17 @@ namespace SandpiperInspector
             {
                 using (StreamWriter file = new StreamWriter(cacheDir + @"\slicelist.txt", false))
                 {
+                    string hashTemp = "";
                     foreach (slice s in localSlices)
                     {
-                        file.WriteLine(s.slice_id + "\t" + s.slice_type + "\t" + s.name + "\t" + s.slicemetadata);
+                        // calc the hash of grainids claiming this slice
+                        hashTemp = ""; 
+                        foreach (grain g in localGrainsCache)
+                        {
+                            if (g.slice_id == s.slice_id) { hashTemp += g.id; }
+                        }
+
+                        file.WriteLine(s.slice_id + "\t" + s.slice_type + "\t" + s.name + "\t" + s.slicemetadata + "\t" + md5(hashTemp));
                     }
                     slicesSuccess = true;
                 }
@@ -822,6 +792,23 @@ namespace SandpiperInspector
             return true;
         }
 
+        public static string md5(string input)
+        {
+            // Use input string to calculate MD5 hash
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                // Convert the byte array to hexadecimal string
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("X2"));
+                }
+                return sb.ToString();
+            }
+        }
 
 
 
@@ -986,7 +973,6 @@ namespace SandpiperInspector
             }
 
         }
-
 
 
 

@@ -8,7 +8,7 @@ Learn about Sandpiper at sandpiperframework.org
  Sandpiper servers use an authentication mechanism around JWTs (JSON Web Tokens). The /login route accepts a POST containing username, password and plandocument and (on successful auth) returns a JWT. The JWT's "payload" section enumerates the specific of the client/server relationship - including the endpoints the client may access on the server.
 
 
-This client does Level-1 (full-file) grain interaction with the server. The local pool is a collection of files in the local cache folder. A timed housekeeping routine watches for changes in the local cache and indexes the files accordingly. Grainlist.txt and slicelist.txt serve as the indexes for the directory. The role (primary/secondary) of the client determines the direction (push/pull) that content will flow between the local and remote pools.
+This client does Level-1 (full-file) grain interaction with the server. The local pool is a collection of files in the local cache folder. A housekeeping routine watches for changes in the local cache and indexes the files accordingly. Grainlist.txt and slicelist.txt serve as the indexes for the directory. The role (primary/secondary) of the client determines the direction (push/pull) that content will flow between the local and remote pools.
 
 
 
