@@ -162,7 +162,7 @@ namespace SandpiperInspector
                 plandocument = plandocumentEncoded
             });
 
-            transcriptRecords.Add(json);
+            transcriptRecords.Add(FormatJson(json));
 
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -173,7 +173,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(responseString);
+                    transcriptRecords.Add(FormatJson(responseString));
 
 
                     try
@@ -265,7 +265,7 @@ namespace SandpiperInspector
 
                     // grains response can be wrapped in "grains"
 
-                    transcriptRecords.Add(responseString);
+                    transcriptRecords.Add(FormatJson(responseString));
 
                     try
                     {
@@ -318,7 +318,7 @@ namespace SandpiperInspector
                 payload = payloadString
             });
 
-            transcriptRecords.Add(bodyJSON);
+            transcriptRecords.Add(FormatJson(bodyJSON));
 
             try
             {
@@ -335,7 +335,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(responseString);
+                    transcriptRecords.Add(FormatJson(responseString));
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 
@@ -382,7 +382,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(responseString);
+                    transcriptRecords.Add(FormatJson(responseString));
 
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serverGrainsResponse = serializer.Deserialize<grainsResponse>(responseString);
@@ -425,7 +425,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(responseString);
+                    transcriptRecords.Add(FormatJson(responseString));
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     slices = serializer.Deserialize<List<slice>>(responseString);
 
@@ -471,7 +471,7 @@ namespace SandpiperInspector
                 metadata=s.slicemetadata
             });
 
-            transcriptRecords.Add(bodyJSON);
+            transcriptRecords.Add(FormatJson(bodyJSON));
 
 
             try
@@ -489,7 +489,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(responseString);
+                    transcriptRecords.Add(FormatJson(responseString));
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 
@@ -994,6 +994,28 @@ namespace SandpiperInspector
         }
 
 
+        public static string FormatJson(string json, string indent = "  ")
+        {
+            var indentation = 0;
+            var quoteCount = 0;
+            var escapeCount = 0;
+
+            var result =
+                from ch in json ?? string.Empty
+                let escaped = (ch == '\\' ? escapeCount++ : escapeCount > 0 ? escapeCount-- : escapeCount) > 0
+                let quotes = ch == '"' && !escaped ? quoteCount++ : quoteCount
+                let unquoted = quotes % 2 == 0
+                let colon = ch == ':' && unquoted ? ": " : null
+                let nospace = char.IsWhiteSpace(ch) && unquoted ? string.Empty : null
+                let lineBreak = ch == ',' && unquoted ? ch + Environment.NewLine + string.Concat(Enumerable.Repeat(indent, indentation)) : null
+                let openChar = (ch == '{' || ch == '[') && unquoted ? ch + Environment.NewLine + string.Concat(Enumerable.Repeat(indent, ++indentation)) : ch.ToString()
+                let closeChar = (ch == '}' || ch == ']') && unquoted ? Environment.NewLine + string.Concat(Enumerable.Repeat(indent, --indentation)) + ch : ch.ToString()
+                select colon ?? nospace ?? lineBreak ?? (
+                    openChar.Length > 1 ? openChar : closeChar
+                );
+
+            return string.Concat(result);
+        }
 
 
 
