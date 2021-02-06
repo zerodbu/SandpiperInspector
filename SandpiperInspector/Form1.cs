@@ -22,7 +22,7 @@ namespace SandpiperInspector
     {
         sandpiperClient sandpiper = new sandpiperClient();
 
-        private TabPage hiddenJWTtab = new TabPage();
+        private TabPage hiddenTranscriptTab = new TabPage();
         private TabPage hiddenRemoteContentTab = new TabPage();
         private TabPage hiddenLocalContentTab = new TabPage();
 
@@ -30,7 +30,7 @@ namespace SandpiperInspector
         private bool localContentTreeIsUpToDate;
         private bool useTimerBasedCachedHousekeeping;
         private bool handlingFwatcherChange;
-
+        private int lastTranscriptRecorCount;
 
         FileSystemWatcher fwatcher = new FileSystemWatcher();
         
@@ -101,10 +101,10 @@ namespace SandpiperInspector
 
 
             // hiddenHistoryTab = tabControl1.TabPages[1];
-            hiddenJWTtab = tabControl1.TabPages[3];
+            hiddenTranscriptTab = tabControl1.TabPages[3];
             hiddenRemoteContentTab = tabControl1.TabPages[4];
 
-            tabControl1.TabPages.RemoveByKey("tabPageJWT"); // hide the JWT tab
+            tabControl1.TabPages.RemoveByKey("tabPageTranscript"); // hide the JWT tab
             tabControl1.TabPages.RemoveByKey("tabPageRemoteContent"); // hide the subscribedSlices tab
 
 
@@ -164,6 +164,7 @@ namespace SandpiperInspector
             textBoxUsername.Enabled = false;
             textBoxPlandocument.Enabled = false;
 
+            sandpiper.transcriptRecords.Add("loginAsync("+ textBoxServerBaseURL.Text + "/login)");
             bool loginSuccess = await sandpiper.loginAsync(textBoxServerBaseURL.Text + "/login", textBoxUsername.Text, textBoxPassword.Text, textBoxPlandocument.Text);
 
             if (loginSuccess)
@@ -230,7 +231,6 @@ namespace SandpiperInspector
                     sandpiper.activeSession = false;
                     pictureBoxStatus.BackColor = Color.Red;
                     lblStatus.Text = "";
-                    tabControl1.TabPages.RemoveByKey("tabPageJWT");
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.AUTHFAILED;
                     break;
 
@@ -250,13 +250,6 @@ namespace SandpiperInspector
                     sandpiper.activeSession = true;
                     pictureBoxStatus.BackColor = Color.Lime;
                     lblStatus.Text = "";
-                    textBoxJWT.Text = sandpiper.sessionJTW.niceFormat;
-
-                    if (!tabControl1.TabPages.ContainsKey("tabPageJWT"))
-                    {
-                        tabControl1.TabPages.Add(hiddenJWTtab);
-                    }
-
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.AUTHENTICATED;
 
                     break;
@@ -284,6 +277,7 @@ namespace SandpiperInspector
                     sandpiper.historyRecords.Add("Getting list of available slices using /v1/slices API route");
                     sandpiper.awaitingServerResponse = true;
                     sandpiper.responseTime = 0;
+                    sandpiper.transcriptRecords.Add("getSlicesAsync(" + textBoxServerBaseURL.Text + "/v1/slices)");
                     sandpiper.availableSlices = await sandpiper.getSlicesAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW);
                     sandpiper.awaitingServerResponse = false;
                     sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableSlices.Count() + " slices (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
@@ -304,6 +298,7 @@ namespace SandpiperInspector
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGGRAINS_AWAITING;
                         sandpiper.awaitingServerResponse = true;
                         sandpiper.responseTime = 0;
+                        sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD)");
                         sandpiper.availableGrains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
                         sandpiper.awaitingServerResponse = false;
                         sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableGrains.Count() + " grains without payloads (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
@@ -334,6 +329,7 @@ namespace SandpiperInspector
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN_AWAITING;
                                         
                     List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
+                    sandpiper.transcriptRecords.Add("getGrainsAsync("+ textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD)");
                     grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
                     if (grains.Count() == 1 && grains[0].id == sandpiper.grainsToTransfer.First().id)
                     {
@@ -384,6 +380,7 @@ namespace SandpiperInspector
                         sandpiper.selectedGrain.description = "";
                         sandpiper.responseTime = 0;
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN_AWAITING;
+                        sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");
                         await sandpiper.postGrainAsync(textBoxServerBaseURL.Text + "/v1/grains", sandpiper.sessionJTW, sandpiper.selectedGrain, sandpiper.z64(fileBytes));
                         sandpiper.grainsToTransfer.RemoveAt(0);
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN;
@@ -563,8 +560,8 @@ namespace SandpiperInspector
 
             textBoxHistory.Width = tabControl1.Width - 18;
             textBoxHistory.Height = tabControl1.Height - 32;
-            textBoxJWT.Width = tabControl1.Width - 18;
-            textBoxJWT.Height = tabControl1.Height - 32;
+            textBoxTranscript.Width = tabControl1.Width - 18;
+            textBoxTranscript.Height = tabControl1.Height - 32;
 
 
 
@@ -911,7 +908,7 @@ namespace SandpiperInspector
                     sandpiper.awaitingServerResponse = true;
                     sandpiper.responseTime = 0;
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN;
-
+                    sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");
                     await sandpiper.postGrainAsync(textBoxServerBaseURL.Text + "/v1/grains", sandpiper.sessionJTW, sandpiper.selectedGrain, sandpiper.z64(fileBytes));
 
                     sandpiper.awaitingServerResponse = false;
@@ -983,6 +980,7 @@ namespace SandpiperInspector
                 if (f.DialogResult == DialogResult.OK)
                 {
 
+                    sandpiper.transcriptRecords.Add("postSliceAsync(" + textBoxServerBaseURL.Text + "/v1/slices)");
                     bool success = await sandpiper.postSliceAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW, sandpiper.selectedSlice);
                     if (success)
                     {
@@ -1073,6 +1071,7 @@ namespace SandpiperInspector
                     foreach (sandpiperClient.grain g in sandpiper.grainsToDrop)
                     {
                         sandpiper.historyRecords.Add("Deleting grain ("+ g.id + ") from remote pool");
+                        sandpiper.transcriptRecords.Add("deleteGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains/" + g.id + ")");
                         await sandpiper.deleteGrainAsync(textBoxServerBaseURL.Text + "/v1/grains/" + g.id, sandpiper.sessionJTW);
                     }
 
@@ -1525,8 +1524,34 @@ namespace SandpiperInspector
             handlingFwatcherChange = false;
         }
 
+        private void timerTransscriptRefresh_Tick(object sender, EventArgs e)
+        {
+
+            if (checkBoxTranscript.Checked)
+            {
+                if (!tabControl1.TabPages.ContainsKey("tabPageTranscript"))
+                {
+                    tabControl1.TabPages.Add(hiddenTranscriptTab);
+                }
 
 
+                if (sandpiper.transcriptRecords.Count() > lastTranscriptRecorCount)
+                {
+                    lastTranscriptRecorCount = sandpiper.transcriptRecords.Count();
+                    textBoxTranscript.Text = string.Join("\r\n---\r\n", sandpiper.transcriptRecords);
+                }
+            }
+            else
+            {
+                if (tabControl1.TabPages.ContainsKey("tabPageTranscript"))
+                {
+                    tabControl1.TabPages.RemoveByKey("tabPageTranscript"); // hide the JWT tab
+                }
+            }
+
+
+
+        }
     }
 
 }

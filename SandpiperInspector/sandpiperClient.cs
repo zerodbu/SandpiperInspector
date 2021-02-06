@@ -42,6 +42,8 @@ namespace SandpiperInspector
         public bool awaitingServerResponse;
         public int responseTime;
         public List<string> historyRecords = new List<string>();
+        public List<string> transcriptRecords = new List<string>();
+
         public int interactionState;
         public int tenMilisecondCounter;
         public int historyRecordCountTemp;
@@ -160,6 +162,9 @@ namespace SandpiperInspector
                 plandocument = plandocumentEncoded
             });
 
+            transcriptRecords.Add(json);
+
+
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             try
@@ -168,6 +173,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
+                    transcriptRecords.Add(responseString);
 
 
                     try
@@ -259,6 +265,8 @@ namespace SandpiperInspector
 
                     // grains response can be wrapped in "grains"
 
+                    transcriptRecords.Add(responseString);
+
                     try
                     {
                         if (responseString.Substring(0, 13).Contains("\"grains\""))
@@ -310,6 +318,8 @@ namespace SandpiperInspector
                 payload = payloadString
             });
 
+            transcriptRecords.Add(bodyJSON);
+
             try
             {
                 var requestData = new HttpRequestMessage
@@ -325,6 +335,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
+                    transcriptRecords.Add(responseString);
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 
@@ -367,9 +378,12 @@ namespace SandpiperInspector
                 requestData.Headers.TryAddWithoutValidation("Authorization", String.Format("Bearer {0}", jwt.token));
 
                 HttpResponseMessage response = await client.SendAsync(requestData);
+
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
+                    transcriptRecords.Add(responseString);
+
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serverGrainsResponse = serializer.Deserialize<grainsResponse>(responseString);
                     historyRecords.Add("Delete grain response message - " + serverGrainsResponse.message);
@@ -411,6 +425,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
+                    transcriptRecords.Add(responseString);
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     slices = serializer.Deserialize<List<slice>>(responseString);
 
@@ -456,6 +471,9 @@ namespace SandpiperInspector
                 metadata=s.slicemetadata
             });
 
+            transcriptRecords.Add(bodyJSON);
+
+
             try
             {
                 var requestData = new HttpRequestMessage
@@ -471,6 +489,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
+                    transcriptRecords.Add(responseString);
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 

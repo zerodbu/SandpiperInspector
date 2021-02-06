@@ -51,8 +51,8 @@
             this.buttonEditLocalSlice = new System.Windows.Forms.Button();
             this.buttonNewLocalSlice = new System.Windows.Forms.Button();
             this.treeViewLocalContent = new System.Windows.Forms.TreeView();
-            this.tabPageJWT = new System.Windows.Forms.TabPage();
-            this.textBoxJWT = new System.Windows.Forms.TextBox();
+            this.tabPageTranscript = new System.Windows.Forms.TabPage();
+            this.textBoxTranscript = new System.Windows.Forms.TextBox();
             this.tabPageRemoteContent = new System.Windows.Forms.TabPage();
             this.buttonNewRemoteSlice = new System.Windows.Forms.Button();
             this.buttonUploadGrain = new System.Windows.Forms.Button();
@@ -72,11 +72,13 @@
             this.textBoxNodeID = new System.Windows.Forms.TextBox();
             this.buttonSync = new System.Windows.Forms.Button();
             this.timerLocalFilesIndexer = new System.Windows.Forms.Timer(this.components);
+            this.timerTransscriptRefresh = new System.Windows.Forms.Timer(this.components);
+            this.checkBoxTranscript = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
             this.tabPageHistory.SuspendLayout();
             this.tabPageLocalConntent.SuspendLayout();
-            this.tabPageJWT.SuspendLayout();
+            this.tabPageTranscript.SuspendLayout();
             this.tabPageRemoteContent.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStatus)).BeginInit();
             this.groupBoxRole.SuspendLayout();
@@ -148,7 +150,7 @@
             this.tabControl1.Controls.Add(this.tabPageSettings);
             this.tabControl1.Controls.Add(this.tabPageHistory);
             this.tabControl1.Controls.Add(this.tabPageLocalConntent);
-            this.tabControl1.Controls.Add(this.tabPageJWT);
+            this.tabControl1.Controls.Add(this.tabPageTranscript);
             this.tabControl1.Controls.Add(this.tabPageRemoteContent);
             this.tabControl1.Location = new System.Drawing.Point(12, 209);
             this.tabControl1.Name = "tabControl1";
@@ -158,6 +160,7 @@
             // 
             // tabPageSettings
             // 
+            this.tabPageSettings.Controls.Add(this.checkBoxTranscript);
             this.tabPageSettings.Controls.Add(this.lblResetSchema);
             this.tabPageSettings.Controls.Add(this.label5);
             this.tabPageSettings.Controls.Add(this.textBoxPlanSchema);
@@ -210,9 +213,9 @@
             this.checkBoxAutotest.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBoxAutotest.Location = new System.Drawing.Point(13, 46);
             this.checkBoxAutotest.Name = "checkBoxAutotest";
-            this.checkBoxAutotest.Size = new System.Drawing.Size(311, 21);
+            this.checkBoxAutotest.Size = new System.Drawing.Size(250, 21);
             this.checkBoxAutotest.TabIndex = 14;
-            this.checkBoxAutotest.Text = "Get available content list after authentication";
+            this.checkBoxAutotest.Text = "Get available content list after auth";
             this.checkBoxAutotest.UseVisualStyleBackColor = true;
             // 
             // lblLocalCacheDir
@@ -309,25 +312,26 @@
             this.treeViewLocalContent.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeViewLocalContent_AfterSelect);
             this.treeViewLocalContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.treeViewLocalContent_KeyUp);
             // 
-            // tabPageJWT
+            // tabPageTranscript
             // 
-            this.tabPageJWT.Controls.Add(this.textBoxJWT);
-            this.tabPageJWT.Location = new System.Drawing.Point(4, 25);
-            this.tabPageJWT.Name = "tabPageJWT";
-            this.tabPageJWT.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageJWT.Size = new System.Drawing.Size(526, 201);
-            this.tabPageJWT.TabIndex = 1;
-            this.tabPageJWT.Text = "JWT";
-            this.tabPageJWT.UseVisualStyleBackColor = true;
+            this.tabPageTranscript.Controls.Add(this.textBoxTranscript);
+            this.tabPageTranscript.Location = new System.Drawing.Point(4, 25);
+            this.tabPageTranscript.Name = "tabPageTranscript";
+            this.tabPageTranscript.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageTranscript.Size = new System.Drawing.Size(526, 201);
+            this.tabPageTranscript.TabIndex = 1;
+            this.tabPageTranscript.Text = "Transcript";
+            this.tabPageTranscript.UseVisualStyleBackColor = true;
             // 
-            // textBoxJWT
+            // textBoxTranscript
             // 
-            this.textBoxJWT.Location = new System.Drawing.Point(6, 6);
-            this.textBoxJWT.Multiline = true;
-            this.textBoxJWT.Name = "textBoxJWT";
-            this.textBoxJWT.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxJWT.Size = new System.Drawing.Size(514, 189);
-            this.textBoxJWT.TabIndex = 0;
+            this.textBoxTranscript.Location = new System.Drawing.Point(6, 6);
+            this.textBoxTranscript.Multiline = true;
+            this.textBoxTranscript.Name = "textBoxTranscript";
+            this.textBoxTranscript.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBoxTranscript.Size = new System.Drawing.Size(514, 189);
+            this.textBoxTranscript.TabIndex = 0;
+            this.textBoxTranscript.WordWrap = false;
             // 
             // tabPageRemoteContent
             // 
@@ -518,6 +522,22 @@
             this.timerLocalFilesIndexer.Interval = 1000;
             this.timerLocalFilesIndexer.Tick += new System.EventHandler(this.timerLocalFilesIndexer_Tick);
             // 
+            // timerTransscriptRefresh
+            // 
+            this.timerTransscriptRefresh.Enabled = true;
+            this.timerTransscriptRefresh.Interval = 300;
+            this.timerTransscriptRefresh.Tick += new System.EventHandler(this.timerTransscriptRefresh_Tick);
+            // 
+            // checkBoxTranscript
+            // 
+            this.checkBoxTranscript.AutoSize = true;
+            this.checkBoxTranscript.Location = new System.Drawing.Point(289, 46);
+            this.checkBoxTranscript.Name = "checkBoxTranscript";
+            this.checkBoxTranscript.Size = new System.Drawing.Size(144, 21);
+            this.checkBoxTranscript.TabIndex = 18;
+            this.checkBoxTranscript.Text = "Display Transcript";
+            this.checkBoxTranscript.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -551,8 +571,8 @@
             this.tabPageHistory.ResumeLayout(false);
             this.tabPageHistory.PerformLayout();
             this.tabPageLocalConntent.ResumeLayout(false);
-            this.tabPageJWT.ResumeLayout(false);
-            this.tabPageJWT.PerformLayout();
+            this.tabPageTranscript.ResumeLayout(false);
+            this.tabPageTranscript.PerformLayout();
             this.tabPageRemoteContent.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStatus)).EndInit();
             this.groupBoxRole.ResumeLayout(false);
@@ -573,10 +593,10 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPageHistory;
-        private System.Windows.Forms.TabPage tabPageJWT;
+        private System.Windows.Forms.TabPage tabPageTranscript;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.TextBox textBoxHistory;
-        private System.Windows.Forms.TextBox textBoxJWT;
+        private System.Windows.Forms.TextBox textBoxTranscript;
         private System.Windows.Forms.TextBox textBoxPlandocument;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TabPage tabPageRemoteContent;
@@ -607,6 +627,8 @@
         private System.Windows.Forms.Button buttonEditLocalSlice;
         private System.Windows.Forms.Button buttonDeleteLocalSlice;
         private System.Windows.Forms.Timer timerLocalFilesIndexer;
+        private System.Windows.Forms.Timer timerTransscriptRefresh;
+        private System.Windows.Forms.CheckBox checkBoxTranscript;
     }
 }
 
