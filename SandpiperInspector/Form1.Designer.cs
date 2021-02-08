@@ -38,6 +38,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageSettings = new System.Windows.Forms.TabPage();
+            this.checkBoxTranscript = new System.Windows.Forms.CheckBox();
             this.lblResetSchema = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.textBoxPlanSchema = new System.Windows.Forms.TextBox();
@@ -73,7 +74,6 @@
             this.buttonSync = new System.Windows.Forms.Button();
             this.timerLocalFilesIndexer = new System.Windows.Forms.Timer(this.components);
             this.timerTransscriptRefresh = new System.Windows.Forms.Timer(this.components);
-            this.checkBoxTranscript = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
             this.tabPageHistory.SuspendLayout();
@@ -173,6 +173,17 @@
             this.tabPageSettings.TabIndex = 3;
             this.tabPageSettings.Text = "Settings";
             this.tabPageSettings.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxTranscript
+            // 
+            this.checkBoxTranscript.AutoSize = true;
+            this.checkBoxTranscript.Location = new System.Drawing.Point(289, 46);
+            this.checkBoxTranscript.Name = "checkBoxTranscript";
+            this.checkBoxTranscript.Size = new System.Drawing.Size(144, 21);
+            this.checkBoxTranscript.TabIndex = 18;
+            this.checkBoxTranscript.Text = "Display Transcript";
+            this.checkBoxTranscript.UseVisualStyleBackColor = true;
+            this.checkBoxTranscript.CheckedChanged += new System.EventHandler(this.checkBoxTranscript_CheckedChanged);
             // 
             // lblResetSchema
             // 
@@ -527,16 +538,6 @@
             this.timerTransscriptRefresh.Enabled = true;
             this.timerTransscriptRefresh.Interval = 300;
             this.timerTransscriptRefresh.Tick += new System.EventHandler(this.timerTransscriptRefresh_Tick);
-            // 
-            // checkBoxTranscript
-            // 
-            this.checkBoxTranscript.AutoSize = true;
-            this.checkBoxTranscript.Location = new System.Drawing.Point(289, 46);
-            this.checkBoxTranscript.Name = "checkBoxTranscript";
-            this.checkBoxTranscript.Size = new System.Drawing.Size(144, 21);
-            this.checkBoxTranscript.TabIndex = 18;
-            this.checkBoxTranscript.Text = "Display Transcript";
-            this.checkBoxTranscript.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 

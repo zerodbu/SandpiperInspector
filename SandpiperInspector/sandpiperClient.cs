@@ -40,6 +40,7 @@ namespace SandpiperInspector
 
         public bool activeSession;
         public bool awaitingServerResponse;
+        public bool recordTranscript;
         public int responseTime;
         public List<string> historyRecords = new List<string>();
         public List<string> transcriptRecords = new List<string>();
@@ -162,7 +163,7 @@ namespace SandpiperInspector
                 plandocument = plandocumentEncoded
             });
 
-            transcriptRecords.Add(FormatJson(json));
+            if (recordTranscript) { transcriptRecords.Add(FormatJson(json)); }
 
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -173,8 +174,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(FormatJson(responseString));
-
+                    if (recordTranscript){transcriptRecords.Add(FormatJson(responseString));}
 
                     try
                     {
@@ -265,7 +265,7 @@ namespace SandpiperInspector
 
                     // grains response can be wrapped in "grains"
 
-                    transcriptRecords.Add(FormatJson(responseString));
+                    if (recordTranscript){transcriptRecords.Add(FormatJson(responseString));}
 
                     try
                     {
@@ -318,7 +318,7 @@ namespace SandpiperInspector
                 payload = payloadString
             });
 
-            transcriptRecords.Add(FormatJson(bodyJSON));
+            if (recordTranscript){transcriptRecords.Add(FormatJson(bodyJSON));}
 
             try
             {
@@ -335,7 +335,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(FormatJson(responseString));
+                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 
@@ -382,7 +382,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(FormatJson(responseString));
+                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
 
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serverGrainsResponse = serializer.Deserialize<grainsResponse>(responseString);
@@ -425,7 +425,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(FormatJson(responseString));
+                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     slices = serializer.Deserialize<List<slice>>(responseString);
 
@@ -468,10 +468,10 @@ namespace SandpiperInspector
                 id = s.slice_id,
                 name = s.name,
                 slice_type = s.slice_type,
-                metadata=s.slicemetadata
+                metadata = s.slicemetadata
             });
 
-            transcriptRecords.Add(FormatJson(bodyJSON));
+            if (recordTranscript) { transcriptRecords.Add(FormatJson(bodyJSON)); }
 
 
             try
@@ -489,7 +489,7 @@ namespace SandpiperInspector
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    transcriptRecords.Add(FormatJson(responseString));
+                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 

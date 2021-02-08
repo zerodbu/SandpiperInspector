@@ -30,6 +30,7 @@ namespace SandpiperInspector
         private bool localContentTreeIsUpToDate;
         private bool useTimerBasedCachedHousekeeping;
         private bool handlingFwatcherChange;
+        private bool ignoreFwatcherChanges;
         private int lastTranscriptRecorCount;
 
         FileSystemWatcher fwatcher = new FileSystemWatcher();
@@ -164,7 +165,7 @@ namespace SandpiperInspector
             textBoxUsername.Enabled = false;
             textBoxPlandocument.Enabled = false;
 
-            sandpiper.transcriptRecords.Add("loginAsync("+ textBoxServerBaseURL.Text + "/login)");
+            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("loginAsync(" + textBoxServerBaseURL.Text + "/login)"); }
             bool loginSuccess = await sandpiper.loginAsync(textBoxServerBaseURL.Text + "/login", textBoxUsername.Text, textBoxPassword.Text, textBoxPlandocument.Text);
 
             if (loginSuccess)
@@ -199,6 +200,8 @@ namespace SandpiperInspector
 
                 timerLocalFilesIndexer.Enabled = true;
             }
+
+
         }
 
 
@@ -277,7 +280,7 @@ namespace SandpiperInspector
                     sandpiper.historyRecords.Add("Getting list of available slices using /v1/slices API route");
                     sandpiper.awaitingServerResponse = true;
                     sandpiper.responseTime = 0;
-                    sandpiper.transcriptRecords.Add("getSlicesAsync(" + textBoxServerBaseURL.Text + "/v1/slices)");
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getSlicesAsync(" + textBoxServerBaseURL.Text + "/v1/slices)"); }
                     sandpiper.availableSlices = await sandpiper.getSlicesAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW);
                     sandpiper.awaitingServerResponse = false;
                     sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableSlices.Count() + " slices (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
@@ -298,7 +301,7 @@ namespace SandpiperInspector
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGGRAINS_AWAITING;
                         sandpiper.awaitingServerResponse = true;
                         sandpiper.responseTime = 0;
-                        sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD)");
+                        if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD)"); }
                         sandpiper.availableGrains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
                         sandpiper.awaitingServerResponse = false;
                         sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableGrains.Count() + " grains without payloads (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
@@ -327,12 +330,14 @@ namespace SandpiperInspector
                 case (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN:
 
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN_AWAITING;
-                                        
+
                     List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
-                    sandpiper.transcriptRecords.Add("getGrainsAsync("+ textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD)");
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD)"); }
+                    
                     grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
                     if (grains.Count() == 1 && grains[0].id == sandpiper.grainsToTransfer.First().id)
                     {
+                        ignoreFwatcherChanges = true;
                         sandpiper.writeFilegrainToFile(grains[0], lblLocalCacheDir.Text);
 
                         sandpiper.historyRecords.Add("Retrieved grain " + grains[0].id + " to local file " + grains[0].source + " (" + grains[0].payload_len.ToString() + " bytes in " + (10*sandpiper.responseTime).ToString() + "mS)");
@@ -346,6 +351,7 @@ namespace SandpiperInspector
                         {// we have downloaded all grains in the "get" list 
                             sandpiper.awaitingServerResponse = false;
                             lblStatus.Text = "";
+                            ignoreFwatcherChanges = false;
                             sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                             unlockUIelemets();
                             updateLocalContentTree();
@@ -380,7 +386,7 @@ namespace SandpiperInspector
                         sandpiper.selectedGrain.description = "";
                         sandpiper.responseTime = 0;
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN_AWAITING;
-                        sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");
+                        if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");}
                         await sandpiper.postGrainAsync(textBoxServerBaseURL.Text + "/v1/grains", sandpiper.sessionJTW, sandpiper.selectedGrain, sandpiper.z64(fileBytes));
                         sandpiper.grainsToTransfer.RemoveAt(0);
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN;
@@ -388,6 +394,7 @@ namespace SandpiperInspector
                     else
                     { // no more grains to upload
                         lblStatus.Text = "";
+                        ignoreFwatcherChanges = false;
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                         unlockUIelemets();
                     }
@@ -713,13 +720,30 @@ namespace SandpiperInspector
 
         }
 
-        private void updateRemoteContentTree(List<sandpiperClient.grain> grains, List<sandpiperClient.slice> slices)
+        private void updateRemoteContentTree(List<sandpiperClient.grain> _grains, List<sandpiperClient.slice> slices)
         {
           //  sandpiper.readCacheIndex(lblLocalCacheDir.Text); // read in the local cache grains list
             //localGrainsCache now holds the list of grains already present
             sandpiper.grainsToTransfer.Clear();
             sandpiper.grainsToDrop.Clear();
 
+            //duplicate the grain list into a new list.
+
+            List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
+
+            foreach (sandpiperClient.grain _g in _grains)
+            {
+                sandpiperClient.grain g = new sandpiperClient.grain();
+                g.description = _g.description;
+                g.encoding = _g.encoding;
+                g.grain_key = _g.grain_key;
+                g.id = _g.id;
+                g.payload_len = _g.payload_len;
+                g.slice_id = _g.slice_id;
+                g.source = _g.source;
+                g.payload = _g.payload;
+                grains.Add(g);
+            }
 
             if (sandpiper.myRole == 0)
             {// i am primary
@@ -908,7 +932,7 @@ namespace SandpiperInspector
                     sandpiper.awaitingServerResponse = true;
                     sandpiper.responseTime = 0;
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN;
-                    sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");
+                    if (sandpiper.recordTranscript){sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");}
                     await sandpiper.postGrainAsync(textBoxServerBaseURL.Text + "/v1/grains", sandpiper.sessionJTW, sandpiper.selectedGrain, sandpiper.z64(fileBytes));
 
                     sandpiper.awaitingServerResponse = false;
@@ -980,7 +1004,7 @@ namespace SandpiperInspector
                 if (f.DialogResult == DialogResult.OK)
                 {
 
-                    sandpiper.transcriptRecords.Add("postSliceAsync(" + textBoxServerBaseURL.Text + "/v1/slices)");
+                    if (sandpiper.recordTranscript){ sandpiper.transcriptRecords.Add("postSliceAsync(" + textBoxServerBaseURL.Text + "/v1/slices)");}
                     bool success = await sandpiper.postSliceAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW, sandpiper.selectedSlice);
                     if (success)
                     {
@@ -1071,7 +1095,7 @@ namespace SandpiperInspector
                     foreach (sandpiperClient.grain g in sandpiper.grainsToDrop)
                     {
                         sandpiper.historyRecords.Add("Deleting grain ("+ g.id + ") from remote pool");
-                        sandpiper.transcriptRecords.Add("deleteGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains/" + g.id + ")");
+                        if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("deleteGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains/" + g.id + ")"); }
                         await sandpiper.deleteGrainAsync(textBoxServerBaseURL.Text + "/v1/grains/" + g.id, sandpiper.sessionJTW);
                     }
 
@@ -1510,7 +1534,7 @@ namespace SandpiperInspector
 
         private void cacheFolderChange(object sender, FileSystemEventArgs e)
         {
-            if (handlingFwatcherChange) { return; }
+            if (handlingFwatcherChange || ignoreFwatcherChanges) { return; }
 
             handlingFwatcherChange = true;
 
@@ -1520,7 +1544,9 @@ namespace SandpiperInspector
             if (!localContentTreeIsUpToDate)
             {// local file was added to the index - we need to flag the local content tree for refresh
                 updateLocalContentTree();
-            }
+                updateRemoteContentTree(sandpiper.availableGrains, sandpiper.availableSlices);
+            }//???
+
             handlingFwatcherChange = false;
         }
 
@@ -1553,10 +1579,10 @@ namespace SandpiperInspector
 
         }
 
-
-
-
-
+        private void checkBoxTranscript_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBoxTranscript.Checked) { sandpiper.recordTranscript=true; } else { sandpiper.recordTranscript = false; }
+        }
     }
 
 }
