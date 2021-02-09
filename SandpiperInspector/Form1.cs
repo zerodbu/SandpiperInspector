@@ -722,8 +722,9 @@ namespace SandpiperInspector
 
         private void updateRemoteContentTree(List<sandpiperClient.grain> _grains, List<sandpiperClient.slice> slices)
         {
-          //  sandpiper.readCacheIndex(lblLocalCacheDir.Text); // read in the local cache grains list
+            //  sandpiper.readCacheIndex(lblLocalCacheDir.Text); // read in the local cache grains list
             //localGrainsCache now holds the list of grains already present
+            treeViewRemoteContent.Nodes.Clear();
             sandpiper.grainsToTransfer.Clear();
             sandpiper.grainsToDrop.Clear();
 
