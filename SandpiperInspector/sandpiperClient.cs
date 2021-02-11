@@ -51,8 +51,12 @@ namespace SandpiperInspector
         public string plandocumentSchema;   // the active one
         public string defaultPlandocumentSchema; // for use if the user "resets to default"
         public List<grain> localGrainsCache = new List<grain>();
+        public List<slice> slicesToTransfer = new List<slice>();
         public List<grain> grainsToTransfer = new List<grain>();
         public List<grain> grainsToDrop = new List<grain>();
+
+
+
 
         public enum interactionStates : int
         {
@@ -112,7 +116,7 @@ namespace SandpiperInspector
             public string slice_type;
             public string name;
             public string slicemetadata;
-            public string grainidsHash; // md5sum of grain uuid concatenated
+            public string hash; // md5sum of grain uuid concatenated
             public List<grain> grains;
 
             public void clear()
@@ -723,6 +727,7 @@ namespace SandpiperInspector
 
 
             // grain index file format: tab-delimited list of: grainid,sliceid,filename
+            // slice index file format: tab-delimited list of: slice_id, slice_type, name, slicemetadata, localgrainidhash, remotehash
 
             bool grainsSuccess = false;
             bool slicesSuccess = false;
@@ -754,13 +759,13 @@ namespace SandpiperInspector
                     foreach (slice s in localSlices)
                     {
                         // calc the hash of grainids claiming this slice
-                        hashTemp = ""; 
+                        hashTemp = "";
                         foreach (grain g in localGrainsCache)
                         {
                             if (g.slice_id == s.slice_id) { hashTemp += g.id; }
                         }
 
-                        file.WriteLine(s.slice_id + "\t" + s.slice_type + "\t" + s.name + "\t" + s.slicemetadata + "\t" + md5(hashTemp));
+                        file.WriteLine(s.slice_id + "\t" + s.slice_type + "\t" + s.name + "\t" + s.slicemetadata + "\t" + md5(hashTemp) + "\t" + s.hash);
                     }
                     slicesSuccess = true;
                 }
@@ -1015,6 +1020,63 @@ namespace SandpiperInspector
                 );
 
             return string.Concat(result);
+        }
+
+
+
+        public bool updateSliceTransferList()
+        {
+            // 
+            slicesToTransfer.Clear();
+
+
+            if (myRole == 0)
+            {// local client is primary
+
+
+
+
+
+
+
+            }
+            else
+            {// local client is secondary 
+
+                foreach (slice remoteSlice in availableSlices)
+                {
+                    bool foundLocalSlice = false;
+                    bool hashMatch = true;
+
+                    foreach (slice localSlice in localSlices)
+                    {
+
+                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        {// found a sliceid match
+
+                            foundLocalSlice = true;
+
+                            if (remoteSlice.hash != localSlice.hash)
+                            {
+                                hashMatch = false;
+                            }
+                            break;
+                        }
+                    }
+
+                    if (!foundLocalSlice || !hashMatch)
+                    {// no local slice was found, or it was found with non-matching hash. We need to get the remote (primary) slice
+                        slice newSlice = new slice();
+                        newSlice.slice_id = remoteSlice.slice_id; newSlice.slice_type = remoteSlice.slice_type; newSlice.name = remoteSlice.name; newSlice.slicemetadata = remoteSlice.slicemetadata; newSlice.hash = remoteSlice.hash;
+                        slicesToTransfer.Add(newSlice);
+                    }
+
+                }
+
+            }
+
+
+            return true;
         }
 
 

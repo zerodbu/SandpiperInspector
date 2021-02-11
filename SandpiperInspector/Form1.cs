@@ -297,14 +297,37 @@ namespace SandpiperInspector
                     else
                     { // previous call to get slices is no longer awaiting - advance state and make next call
 
-                        sandpiper.historyRecords.Add("Gettting list of available grains List using /grains API route");
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGGRAINS_AWAITING;
-                        sandpiper.awaitingServerResponse = true;
-                        sandpiper.responseTime = 0;
-                        if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD)"); }
-                        sandpiper.availableGrains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
-                        sandpiper.awaitingServerResponse = false;
-                        sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableGrains.Count() + " grains without payloads (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
+                        // compare the just-gotten slicelist to the local caches' slicelist for hash comparison
+
+
+                        sandpiper.updateSliceTransferList();
+                        if (sandpiper.slicesToTransfer.Count() > 0)
+                        {
+                            sandpiper.historyRecords.Add("Hash comparison found "+ sandpiper.slicesToTransfer.Count().ToString() + " slices (of the "+ sandpiper.availableSlices.Count().ToString() + " available) to require sync." );
+
+                            sandpiper.historyRecords.Add("Gettting list of available grains List using /grains API route");
+                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGGRAINS_AWAITING;
+                            sandpiper.awaitingServerResponse = true;
+                            sandpiper.responseTime = 0;
+                            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD)"); }
+                            sandpiper.availableGrains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
+                            sandpiper.awaitingServerResponse = false;
+                            sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableGrains.Count() + " grains without payloads (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
+
+
+                        }
+                        else
+                        {// slice hitlist is empty - no need to continue interacting with server
+
+                            sandpiper.historyRecords.Add("Hash comparison found all ("+sandpiper.availableSlices.Count().ToString()+") available slices to be in sync with local cache");
+
+                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
+                            unlockUIelemets();
+                            lblStatus.Text = "";
+                        }
+
+
+
                     }
                     break;
 
@@ -321,7 +344,6 @@ namespace SandpiperInspector
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                         unlockUIelemets();
                         lblStatus.Text = "";
-                        //sandpiper.historyRecords.Add("Updating available Content tree view");
                         updateRemoteContentTree(sandpiper.availableGrains, sandpiper.availableSlices);
                     }
 
@@ -719,6 +741,11 @@ namespace SandpiperInspector
             buttonEditLocalSlice.Enabled = false;
 
         }
+
+
+        
+
+
 
         private void updateRemoteContentTree(List<sandpiperClient.grain> _grains, List<sandpiperClient.slice> slices)
         {
@@ -1464,14 +1491,14 @@ namespace SandpiperInspector
                 foreach (string line in lines)
                 {
                     string[] fields = line.Split('\t');
-                    if (fields.Count() == 5 && sandpiper.looksLikeAUUID(fields[0]))
+                    if (fields.Count() == 6 && sandpiper.looksLikeAUUID(fields[0]))
                     {
                         sandpiperClient.slice s = new sandpiperClient.slice();
                         s.slice_id = fields[0];
                         s.slice_type = fields[1];
                         s.name = fields[2];
                         s.slicemetadata = fields[3];
-                        s.grainidsHash = fields[4];
+                        s.hash = fields[5];
                         sandpiper.localSlices.Add(s);
                         if (!sliceidKeyedNames.ContainsKey(s.slice_id)) { sliceidKeyedNames.Add(s.slice_id, s.name); }
                     }
