@@ -45,6 +45,9 @@ namespace SandpiperInspector
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            //ccc
+
+
             sandpiper.defaultPlandocumentSchema = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:vc=\"http://www.w3.org/2007/XMLSchema-versioning\" vc:minVersion=\"1.1\" elementFormDefault=\"qualified\">\r\n\t<!-- Basic types -->\r\n\t<xs:simpleType name=\"uuid\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:length value=\"36\" fixed=\"true\"/>\r\n\t\t\t<xs:pattern value=\"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Medium\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Short\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"40\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Email\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t\t<xs:pattern value=\"[^\\s]+@[^\\s]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldName\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"63\"/>\r\n\t\t\t<xs:pattern value=\"[A-Za-z][A-Za-z0-9_\\-]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldValue\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Levels\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:enumeration value=\"1-1\"/>\r\n\t\t\t<xs:enumeration value=\"1-2\"/>\r\n\t\t\t<xs:enumeration value=\"2\"/>\r\n\t\t\t<xs:enumeration value=\"3\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<!-- Attribute templates used in multiple places -->\r\n\t<xs:attributeGroup name=\"Model\">\r\n\t\t<xs:attribute name=\"uuid\" type=\"uuid\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Main\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Optional\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t</xs:attributeGroup>\r\n\t<!-- Element templates used in multiple places -->\r\n\t<xs:complexType name=\"LinkGroup\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"UniqueLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"MultiLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<xs:element name=\"MultLinkEntry\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t</xs:complexType>\r\n\t<xs:complexType name=\"Instance\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"Software\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t<xs:attribute name=\"version\" type=\"String_Short\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"Capability\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<!-- If a server is available, it is listed here -->\r\n\t\t\t\t\t\t<xs:element name=\"Response\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"uri\" type=\"xs:string\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"role\">\r\n\t\t\t\t\t\t\t\t\t<xs:simpleType>\r\n\t\t\t\t\t\t\t\t\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Synchronization\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Authentication\"/>\r\n\t\t\t\t\t\t\t\t\t\t</xs:restriction>\r\n\t\t\t\t\t\t\t\t\t</xs:simpleType>\r\n\t\t\t\t\t\t\t\t</xs:attribute>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"level\" type=\"Levels\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t</xs:complexType>\r\n\t<!-- Main schema -->\r\n\t<xs:element name=\"Plan\">\r\n\t\t<xs:complexType>\r\n\t\t\t<xs:sequence>\r\n\t\t\t\t<xs:element name=\"Primary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Controller\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Admin\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"contact\" type=\"String_Medium\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"email\" type=\"Email\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Pools\" maxOccurs=\"1\" minOccurs=\"0\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Pool\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryPoolLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slices\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slice\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"SliceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Communal\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Subscriptions\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Subscription\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<!-- Not part of Sandpiper 1.0 - future use -->\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfiles\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfile\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"sliceuuid\" type=\"uuid\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Secondary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"SecondaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t</xs:sequence>\r\n\t\t\t<xs:attribute name=\"uuid\" type=\"uuid\"/>\r\n\t\t</xs:complexType>\r\n\t</xs:element>\r\n</xs:schema>";
 
             useTimerBasedCachedHousekeeping = false;
@@ -219,7 +222,6 @@ namespace SandpiperInspector
             {
                 case (int)sandpiperClient.interactionStates.IDLE:
 
-
                     break;
 
                 case (int)sandpiperClient.interactionStates.AUTHENTICATING:
@@ -231,9 +233,7 @@ namespace SandpiperInspector
 
                 case (int)sandpiperClient.interactionStates.AUTHFAILED_UPDATING_UI:
 
-                    sandpiper.activeSession = false;
-                    pictureBoxStatus.BackColor = Color.Red;
-                    lblStatus.Text = "";
+                    sandpiper.activeSession = false; pictureBoxStatus.BackColor = Color.Red; lblStatus.Text = "";
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.AUTHFAILED;
                     break;
 
@@ -250,11 +250,8 @@ namespace SandpiperInspector
 
                 case (int)sandpiperClient.interactionStates.AUTHENTICATED_UPDATING_UI:
 
-                    sandpiper.activeSession = true;
-                    pictureBoxStatus.BackColor = Color.Lime;
-                    lblStatus.Text = "";
+                    sandpiper.activeSession = true; pictureBoxStatus.BackColor = Color.Lime; lblStatus.Text = "";
                     sandpiper.interactionState = (int)sandpiperClient.interactionStates.AUTHENTICATED;
-
                     break;
 
 
@@ -264,110 +261,191 @@ namespace SandpiperInspector
 
                     if (checkBoxAutotest.Checked)
                     {
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGSLICES;
-                    }
-                    else
-                    {
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
-                    }
-
-                    break;
-
-
-                case (int)sandpiperClient.interactionStates.GETTINGSLICES:
-
-                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGSLICES_AWAITING;
-                    sandpiper.historyRecords.Add("Getting list of available slices using /v1/slices API route");
-                    sandpiper.awaitingServerResponse = true;
-                    sandpiper.responseTime = 0;
-                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getSlicesAsync(" + textBoxServerBaseURL.Text + "/v1/slices)"); }
-                    sandpiper.availableSlices = await sandpiper.getSlicesAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW);
-                    sandpiper.awaitingServerResponse = false;
-                    sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableSlices.Count() + " slices (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
-                    break;
-
-
-                case (int)sandpiperClient.interactionStates.GETTINGSLICES_AWAITING:
-
-                    if (sandpiper.awaitingServerResponse)
-                    {// awaiting return of getSlicesAsync call
-                        sandpiper.responseTime++;
-                        lblStatus.Text = "Getting slice list (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
-                    }
-                    else
-                    { // previous call to get slices is no longer awaiting - advance state and make next call
-
-                        // compare the just-gotten slicelist to the local caches' slicelist for hash comparison
-
-
-                        sandpiper.updateSliceTransferList();
-                        if (sandpiper.slicesToTransfer.Count() > 0)
-                        {
-                            sandpiper.historyRecords.Add("Hash comparison found "+ sandpiper.slicesToTransfer.Count().ToString() + " slices (of the "+ sandpiper.availableSlices.Count().ToString() + " available) to require sync." );
-
-                            sandpiper.historyRecords.Add("Gettting list of available grains List using /grains API route");
-                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGGRAINS_AWAITING;
-                            sandpiper.awaitingServerResponse = true;
-                            sandpiper.responseTime = 0;
-                            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD)"); }
-                            sandpiper.availableGrains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
-                            sandpiper.awaitingServerResponse = false;
-                            sandpiper.historyRecords.Add("    Received list of " + sandpiper.availableGrains.Count() + " grains without payloads (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
-
-
+                        if (sandpiper.myRole == 0)
+                        {// local client is primary
+                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_SLICELIST;
                         }
                         else
-                        {// slice hitlist is empty - no need to continue interacting with server
-
-                            sandpiper.historyRecords.Add("Hash comparison found all ("+sandpiper.availableSlices.Count().ToString()+") available slices to be in sync with local cache");
-
-                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
-                            unlockUIelemets();
-                            lblStatus.Text = "";
+                        {// local client is secondary
+                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_SLICELIST;
                         }
-
-
-
-                    }
-                    break;
-
-
-                case (int)sandpiperClient.interactionStates.GETTINGGRAINS_AWAITING:
-
-                    if (sandpiper.awaitingServerResponse)
-                    {// do nothing - maybe add timeout checking here
-                        sandpiper.responseTime++;
-                        lblStatus.Text = "Getting grain list (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
                     }
                     else
                     {
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
-                        unlockUIelemets();
-                        lblStatus.Text = "";
-                        updateRemoteContentTree(sandpiper.availableGrains, sandpiper.availableSlices);
                     }
 
                     break;
 
-                case (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN:
 
-                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN_AWAITING;
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_SLICELIST:
+
+                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_SLICELIST_AWAITING;
+                    sandpiper.historyRecords.Add("Getting a list of existing slices from the remote secondary using /v1/slices API route (method=GET)");
+                    sandpiper.awaitingServerResponse = true; sandpiper.responseTime = 0;
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getSlicesAsync(" + textBoxServerBaseURL.Text + "/v1/slices)"); }
+                    sandpiper.remoteSlices = await sandpiper.getSlicesAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW);
+                    sandpiper.awaitingServerResponse = false;
+                    sandpiper.historyRecords.Add("    Received list of " + sandpiper.remoteSlices.Count() + " slices (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
+                    sandpiper.updateSliceHitlists();
+
+                    if (sandpiper.slicesToDrop.Count() > 0)
+                    {
+                        sandpiper.historyRecords.Add("Remote secondary contains " + sandpiper.slicesToDrop.Count().ToString() + " slices that will be dropped because they are not in the local primary pool");
+                    }
+                    else
+                    {
+                        sandpiper.historyRecords.Add("All slices on remote secondary are valid (exist in local primary pool)");
+                    }
+
+                    break;
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_SLICELIST_AWAITING:
+                    sandpiper.responseTime++;
+                    lblStatus.Text = "Getting slice list (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+                    break;
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_GRAINLIST:
+                    break;
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_GRAINLIST_AWAITING:
+                    break;
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_SLICES:
+
+
+                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_SLICES_AWAITING;
+                    sandpiper.historyRecords.Add("Delteing slices using calls to /v1/slices API route (method=DELETE)");
+                    sandpiper.awaitingServerResponse = true;
+                    sandpiper.responseTime = 0;
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("deleteSliceAsync(" + textBoxServerBaseURL.Text + "/v1/slices)"); }
+                    await sandpiper.deleteSliceAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW);
+                    sandpiper.awaitingServerResponse = false;
+                    sandpiper.historyRecords.Add("    Deleted slice: " + sandpiper.slicesToDrop[0].name + " (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
+                    sandpiper.slicesToDrop.RemoveAt(0);
+                    if (sandpiper.slicesToDrop.Count() == 0)
+                    {// done dropping hitlist of remote secondary slices
+
+                        lblStatus.Text = "";
+                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
+                        unlockUIelemets();
+                    }
+                    else
+                    {// slices remain to drop on the remote secondary
+
+                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_SLICES;
+
+                    }
+
+                    break;
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_SLICES_AWAITING:
+                    sandpiper.responseTime++;
+                    lblStatus.Text = "Deleting slice: " + sandpiper.slicesToDrop[0].name + " (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)  " + sandpiper.slicesToDrop.Count().ToString() + " slices remaining";
+                    break;
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_GRAINS_AWAITING:
+                    sandpiper.responseTime++;
+                    lblStatus.Text = "Deleting grains (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+                    break;
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_CREATE_SLICES:
+                    break;
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_CREATE_SLICES_AWAITING:
+                    sandpiper.responseTime++;
+                    lblStatus.Text = "Creating slices (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+                    break;
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_UPLOADING_GRAINS:
+                    break;
+
+                case (int)sandpiperClient.interactionStates.REMOTE_SEC_UPLOADING_GRAINS_AWAITING:
+                    sandpiper.responseTime++;
+                    lblStatus.Text = "Uploading grains (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+
+                    break;
+
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_SLICELIST:
+
+                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_SLICELIST_AWAITING;
+                    sandpiper.historyRecords.Add("Getting list of available slices from the remote primary using /v1/slices API route (method=GET)");
+                    sandpiper.awaitingServerResponse = true; sandpiper.responseTime = 0;
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getSlicesAsync(" + textBoxServerBaseURL.Text + "/v1/slices)"); }
+                    sandpiper.remoteSlices = await sandpiper.getSlicesAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW);
+                    sandpiper.awaitingServerResponse = false;
+                    sandpiper.historyRecords.Add("    Received list of " + sandpiper.remoteSlices.Count() + " slices (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
+                    sandpiper.updateSliceHitlists();
+
+                    if (sandpiper.slicesToDrop.Count() > 0)
+                    {
+                        sandpiper.historyRecords.Add("Local secondary pool contains " + sandpiper.slicesToDrop.Count().ToString() + " slices that will be dropped because they are not in the remote primary pool");
+                    }
+                    else
+                    {
+                        sandpiper.historyRecords.Add("All slices in local secondary pool are valid (exist in remote primary pool) - nothing to delete");
+                    }
+
+
+                    if (sandpiper.slicesToUpdate.Count() > 0)
+                    {
+                        sandpiper.historyRecords.Add("Remote primary pool contains " + sandpiper.slicesToUpdate.Count().ToString() + " slices that will be updated or created in the local secondary pool");
+                    }
+                    else
+                    {
+                        sandpiper.historyRecords.Add("All slices in remote secondary pool exist in the local secondary pool - nothing to add");
+                    }
+
+
+                    // execute the local slices drops 
+
+                    ignoreFwatcherChanges = true;
+                    foreach (sandpiperClient.slice s in sandpiper.slicesToDrop)
+                    {// each of these needs to be dropped from the local cache 
+                        sandpiper.deleteLocalSice(s, lblLocalCacheDir.Text);
+                    }
+                    ignoreFwatcherChanges = false;
+
+                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_GRAINLIST;
+
+                    break;
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_SLICELIST_AWAITING:
+                    sandpiper.responseTime++;
+                    lblStatus.Text = "Getting slice list (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+                    break;
+
+
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_GRAINLIST:
+
+                    // we are secondary and now have a hitlists of slices to create and update locally
+
+
 
                     List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
                     if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD)"); }
-                    
+
                     grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().id + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
                     if (grains.Count() == 1 && grains[0].id == sandpiper.grainsToTransfer.First().id)
                     {
                         ignoreFwatcherChanges = true;
                         sandpiper.writeFilegrainToFile(grains[0], lblLocalCacheDir.Text);
 
-                        sandpiper.historyRecords.Add("Retrieved grain " + grains[0].id + " to local file " + grains[0].source + " (" + grains[0].payload_len.ToString() + " bytes in " + (10*sandpiper.responseTime).ToString() + "mS)");
+                        sandpiper.historyRecords.Add("Retrieved grain " + grains[0].id + " to local file " + grains[0].source + " (" + grains[0].payload_len.ToString() + " bytes in " + (10 * sandpiper.responseTime).ToString() + "mS)");
                         sandpiper.grainsToTransfer.RemoveAt(0);
                         if (sandpiper.grainsToTransfer.Count() > 0)
                         {// the shopping list contains more grains
                             sandpiper.responseTime = 0;
-                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN;
+                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                         }
                         else
                         {// we have downloaded all grains in the "get" list 
@@ -385,50 +463,28 @@ namespace SandpiperInspector
                     }
                     sandpiper.awaitingServerResponse = false;
 
+
                     break;
 
-                case (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN_AWAITING:
 
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_GRAINLIST_AWAITING:
                     sandpiper.responseTime++;
-                    lblStatus.Text = "Downloading grain (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)  "+ sandpiper.grainsToTransfer.Count().ToString() + " grains remaining";
+                    lblStatus.Text = "Getting grains list (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
                     break;
 
-
-
-                case (int)sandpiperClient.interactionStates.UPLOADINGGRAIN:
-
-                    if (sandpiper.grainsToTransfer.Count() > 0)
-                    {//ccc
-                        byte[] fileBytes = File.ReadAllBytes(lblLocalCacheDir.Text + "\\" + sandpiper.grainsToTransfer[0].source);
-                        sandpiper.selectedGrain.id = sandpiper.grainsToTransfer[0].id;
-                        sandpiper.selectedGrain.encoding = "z64";
-                        sandpiper.selectedGrain.grain_key = "Level-1";
-                        sandpiper.selectedGrain.source = Path.GetFileName(sandpiper.grainsToTransfer[0].source);
-                        sandpiper.selectedGrain.slice_id = sandpiper.grainsToTransfer[0].slice_id;
-                        sandpiper.selectedGrain.description = "";
-                        sandpiper.responseTime = 0;
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN_AWAITING;
-                        if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");}
-                        await sandpiper.postGrainAsync(textBoxServerBaseURL.Text + "/v1/grains", sandpiper.sessionJTW, sandpiper.selectedGrain, sandpiper.z64(fileBytes));
-                        sandpiper.grainsToTransfer.RemoveAt(0);
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN;
-                    }
-                    else
-                    { // no more grains to upload
-                        lblStatus.Text = "";
-                        ignoreFwatcherChanges = false;
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
-                        unlockUIelemets();
-                    }
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_UPLOADING_GRAINS:
 
                     break;
 
 
-                case (int)sandpiperClient.interactionStates.UPLOADINGGRAIN_AWAITING:
-
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_UPLOADING_GRAINS_AWAITING:
                     sandpiper.responseTime++;
-                    lblStatus.Text = "Uploading grain " + sandpiper.selectedGrain.source + " (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+                    lblStatus.Text = "Upload grain (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
                     break;
+
+
+
+
 
 
                 default: break;
@@ -600,19 +656,8 @@ namespace SandpiperInspector
             treeViewRemoteContent.Width = tabControl1.Width - 18;
             treeViewRemoteContent.Height = tabControl1.Height - 65;
 
-
-
-
             buttonNewRemoteSlice.Left = tabControl1.Width - 385;
             buttonNewRemoteSlice.Top = treeViewRemoteContent.Bottom + 8;
-            buttonGetSubscribedSlices.Left = tabControl1.Width - 210;
-            buttonGetSubscribedSlices.Top = treeViewRemoteContent.Bottom + 8;
-            buttonUploadGrain.Left = tabControl1.Width - 154;
-            buttonUploadGrain.Top = treeViewRemoteContent.Bottom + 8;
-            buttonDownloadGrain.Left = tabControl1.Width - 90;
-            buttonDownloadGrain.Top = treeViewRemoteContent.Bottom + 8;
-
-
 
             buttonDeleteLocalSlice.Left = tabControl1.Width - 250;
             buttonDeleteLocalSlice.Top = treeViewRemoteContent.Bottom + 8;
@@ -624,9 +669,6 @@ namespace SandpiperInspector
             buttonEditLocalSlice.Left = tabControl1.Width - 90;
             buttonEditLocalSlice.Top = treeViewRemoteContent.Bottom + 8;
 
-
-
-
             textBoxPlanSchema.Height = tabControl1.Height - 114;
             textBoxPlanSchema.Width = tabControl1.Width - 31;
         }
@@ -637,8 +679,6 @@ namespace SandpiperInspector
 
         private void treeViewSubscriptions_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            buttonDownloadGrain.Enabled = false;
-            buttonUploadGrain.Enabled = false;
             sandpiper.selectedGrain.clear();
             sandpiper.selectedSlice.clear();
 
@@ -648,7 +688,6 @@ namespace SandpiperInspector
                 if (sandpiper.looksLikeAUUID(chunks[1]))
                 {
                     sandpiper.selectedGrain.id = chunks[1];
-                    buttonDownloadGrain.Enabled = true;
                 }
             }
 
@@ -658,22 +697,9 @@ namespace SandpiperInspector
                 if (sandpiper.looksLikeAUUID(chunks[1]))
                 {
                     sandpiper.selectedSlice.slice_id = chunks[1];
-                    buttonUploadGrain.Enabled = true;
                 }
             }
         }
-
-        private void buttonGetSubscribedSlices_Click(object sender, EventArgs e)
-        {
-            lblStatus.Text = "Getting content list...";
-            sandpiper.responseTime = 0;
-            treeViewRemoteContent.Nodes.Clear();
-            if (sandpiper.activeSession)
-            {
-                sandpiper.interactionState = (int)sandpiperClient.interactionStates.GETTINGSLICES;
-            }
-        }
-
         private void buttonSelectCacheDir_Click(object sender, EventArgs e)
         {
             using (var fbd = new FolderBrowserDialog())
@@ -928,45 +954,6 @@ namespace SandpiperInspector
         }
 
 
-        private void buttonDownloadGrain_Click(object sender, EventArgs e)
-        {
-            if (sandpiper.looksLikeAUUID(sandpiper.selectedGrain.id))
-            {
-                sandpiper.grainsToTransfer.Add(sandpiper.selectedGrain);
-                sandpiper.awaitingServerResponse = true;
-                sandpiper.responseTime = 0;
-                sandpiper.interactionState = (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN;
-            }
-        }
-
-        private async void buttonUploadGrain_Click(object sender, EventArgs e)
-        {
-
-            using (var openFileDialog = new OpenFileDialog())
-            {
-
-                DialogResult openFileResult = openFileDialog.ShowDialog();
-
-                if (openFileResult.ToString() == "OK")
-                {
-                    byte[] fileBytes = File.ReadAllBytes(openFileDialog.FileName);
-
-                    sandpiper.selectedGrain.id = Guid.NewGuid().ToString("D");
-                    sandpiper.selectedGrain.encoding = "z64";
-                    sandpiper.selectedGrain.source = Path.GetFileName(openFileDialog.FileName);
-                    sandpiper.selectedGrain.slice_id = sandpiper.selectedSlice.slice_id;
-                    sandpiper.selectedGrain.description = "";
-
-                    sandpiper.awaitingServerResponse = true;
-                    sandpiper.responseTime = 0;
-                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN;
-                    if (sandpiper.recordTranscript){sandpiper.transcriptRecords.Add("postGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains)");}
-                    await sandpiper.postGrainAsync(textBoxServerBaseURL.Text + "/v1/grains", sandpiper.sessionJTW, sandpiper.selectedGrain, sandpiper.z64(fileBytes));
-
-                    sandpiper.awaitingServerResponse = false;
-                }
-            }
-        }
 
         private async void treeViewRemoteContent_KeyUp(object sender, KeyEventArgs e)
         {
@@ -1008,10 +995,6 @@ namespace SandpiperInspector
         }
 
 
-
-        private void buttonUpdateLocal_Click(object sender, EventArgs e)
-        {
-        }
 
         private async void buttonNewSlice_Click(object sender, EventArgs e)
         {
@@ -1091,51 +1074,24 @@ namespace SandpiperInspector
 
         private async void buttonSync_Click(object sender, EventArgs e)
         {
-            //lockUIelemets();
-//            sandpiper.readCacheIndex(lblLocalCacheDir.Text);  // read in (and verify file existance) for good measure - in case something has been deleted or addded on the local cache directory in the past few moments by an outside person or processs
-//            indexLocalFiles(lblLocalCacheDir.Text);
-
-
+            sandpiper.updateSliceHitlists();
 
             if (sandpiper.myRole == 0)
             {// my local client is primary in the the plan
              // every file in the loacal cache directory needs to be in agreement with the remote - even if local cache index is not aware of the files
 
 
-                if (sandpiper.grainsToTransfer.Count() > 0)
+                if (sandpiper.slicesToDrop.Count() > 0)
                 {
-                    sandpiper.historyRecords.Add("Uploading " + sandpiper.grainsToTransfer.Count().ToString() + " grains");
+                    sandpiper.historyRecords.Add(sandpiper.slicesToDrop.Count().ToString() + " slices need to be deleted from remote secondary");
                     sandpiper.awaitingServerResponse = true;
                     sandpiper.responseTime = 0;
-                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.UPLOADINGGRAIN;
-                }
+                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_SLICES;
+                } //ccc
                 else
                 {
-                    sandpiper.historyRecords.Add("Remote pool contains all grains in the local cache. Nothing to upload");
+                    sandpiper.historyRecords.Add("No slices to delete from remote secondary pool");
                 }
-
-
-
-                if (sandpiper.grainsToDrop.Count() > 0)
-                {
-                    sandpiper.awaitingServerResponse = true;
-
-                    foreach (sandpiperClient.grain g in sandpiper.grainsToDrop)
-                    {
-                        sandpiper.historyRecords.Add("Deleting grain ("+ g.id + ") from remote pool");
-                        if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("deleteGrainAsync(" + textBoxServerBaseURL.Text + "/v1/grains/" + g.id + ")"); }
-                        await sandpiper.deleteGrainAsync(textBoxServerBaseURL.Text + "/v1/grains/" + g.id, sandpiper.sessionJTW);
-                    }
-
-                    sandpiper.awaitingServerResponse = false;
-                }
-                else
-                {
-                    sandpiper.historyRecords.Add("Remote pool contains no extraneous grains. Nothing to drop");
-                }
-
-
-
 
 
 
@@ -1146,39 +1102,12 @@ namespace SandpiperInspector
 
 
                 // drop any rogue slices that exist locally (drop grains that claim them also)
-                sandpiper.dropRogueLocalSlices(sandpiper.availableSlices, lblLocalCacheDir.Text);
+                sandpiper.dropRogueLocalSlices(sandpiper.remoteSlices, lblLocalCacheDir.Text);
 
                 // add slices from the server's list that are not present locally
-                sandpiper.addMissingLocalSlices(sandpiper.availableSlices, lblLocalCacheDir.Text);
+                sandpiper.addMissingLocalSlices(sandpiper.remoteSlices, lblLocalCacheDir.Text);
 
 
-
-
-
-                if (sandpiper.grainsToTransfer.Count() > 0)
-                {
-                    sandpiper.historyRecords.Add("Downloading " + sandpiper.grainsToTransfer.Count().ToString() + " grains");
-                    sandpiper.awaitingServerResponse = true;
-                    sandpiper.responseTime = 0;
-                    sandpiper.interactionState = (int)sandpiperClient.interactionStates.DOWNLOADINGGRAIN;
-                }
-                else
-                {
-                    sandpiper.historyRecords.Add("Local grains list contains all grains reported by server. Nothing to download");
-                }
-
-                if (sandpiper.grainsToDrop.Count() > 0)
-                {
-                    foreach (sandpiperClient.grain g in sandpiper.grainsToDrop)
-                    {
-                        sandpiper.deleteLocalGrain(g, lblLocalCacheDir.Text);
-                    }
-                    sandpiper.grainsToDrop.Clear();
-                }
-                else
-                {
-                    sandpiper.historyRecords.Add("All local grains exist in list reported by the server. Nothing to delete from the local cache");
-                }
 
                 updateLocalContentTree();
             }
@@ -1193,9 +1122,6 @@ namespace SandpiperInspector
             buttonValidatePlan.Enabled = false;
             buttonNewLocalSlice.Enabled = false;
             buttonNewRemoteSlice.Enabled = false;
-            buttonDownloadGrain.Enabled = false;
-            buttonUploadGrain.Enabled = false;
-            buttonGetSubscribedSlices.Enabled = false;
         }
 
         private void unlockUIelemets()
@@ -1205,9 +1131,6 @@ namespace SandpiperInspector
             buttonValidatePlan.Enabled = true;
             buttonNewLocalSlice.Enabled = true;
             buttonNewRemoteSlice.Enabled = true;
-            buttonDownloadGrain.Enabled = true;
-            buttonUploadGrain.Enabled = true;
-            buttonGetSubscribedSlices.Enabled = true;
         }
 
         private void treeViewLocalContent_AfterSelect(object sender, TreeViewEventArgs e)
@@ -1572,7 +1495,7 @@ namespace SandpiperInspector
             if (!localContentTreeIsUpToDate)
             {// local file was added to the index - we need to flag the local content tree for refresh
                 updateLocalContentTree();
-                updateRemoteContentTree(sandpiper.availableGrains, sandpiper.availableSlices);
+                updateRemoteContentTree(sandpiper.availableGrains, sandpiper.remoteSlices);
             }//???
 
             handlingFwatcherChange = false;
@@ -1610,6 +1533,12 @@ namespace SandpiperInspector
         private void checkBoxTranscript_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBoxTranscript.Checked) { sandpiper.recordTranscript=true; } else { sandpiper.recordTranscript = false; }
+        }
+
+        private async void pictureBoxStatus_Click(object sender, EventArgs e)
+        {
+            await sandpiper.sendHeartbeat();
+
         }
     }
 

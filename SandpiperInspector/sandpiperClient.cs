@@ -34,7 +34,7 @@ namespace SandpiperInspector
         public JWT sessionJTW = new JWT();
         public List<grain> availableGrains = new List<grain>();
         public grain selectedGrain = new grain();
-        public List<slice> availableSlices = new List<slice>();
+        public List<slice> remoteSlices = new List<slice>();
         public slice selectedSlice = new slice();
         public List<slice> localSlices = new List<slice>();
 
@@ -51,7 +51,9 @@ namespace SandpiperInspector
         public string plandocumentSchema;   // the active one
         public string defaultPlandocumentSchema; // for use if the user "resets to default"
         public List<grain> localGrainsCache = new List<grain>();
-        public List<slice> slicesToTransfer = new List<slice>();
+        public List<slice> slicesToUpdate = new List<slice>();
+        public List<slice> slicesToAdd = new List<slice>();
+        public List<slice> slicesToDrop = new List<slice>();
         public List<grain> grainsToTransfer = new List<grain>();
         public List<grain> grainsToDrop = new List<grain>();
 
@@ -66,15 +68,26 @@ namespace SandpiperInspector
             AUTHFAILED = 3,
             AUTHENTICATED_UPDATING_UI = 4,
             AUTHENTICATED = 5,
-            GETTINGSLICES = 6,
-            GETTINGSLICES_AWAITING = 7,
-            GETTINGGRAINS_AWAITING = 8,
-            UPLOADINGGRAIN = 9,
-            UPLOADINGGRAIN_AWAITING = 10,
-            DOWNLOADINGGRAIN = 11,
-            DOWNLOADINGGRAIN_AWAITING = 12,
-            DELETINGGRAIN = 13
 
+            REMOTE_SEC_GET_SLICELIST = 6,
+            REMOTE_SEC_GET_SLICELIST_AWAITING = 7,
+            REMOTE_SEC_GET_GRAINLIST = 8,
+            REMOTE_SEC_GET_GRAINLIST_AWAITING = 9,
+            REMOTE_SEC_DROP_SLICES = 10,
+            REMOTE_SEC_DROP_SLICES_AWAITING = 11,
+            REMOTE_SEC_DROP_GRAINS = 12,
+            REMOTE_SEC_DROP_GRAINS_AWAITING = 13,
+            REMOTE_SEC_CREATE_SLICES = 14,
+            REMOTE_SEC_CREATE_SLICES_AWAITING = 15,
+            REMOTE_SEC_UPLOADING_GRAINS = 16,
+            REMOTE_SEC_UPLOADING_GRAINS_AWAITING = 17,
+
+            REMOTE_PRI_GET_SLICELIST = 18,
+            REMOTE_PRI_GET_SLICELIST_AWAITING = 19,
+            REMOTE_PRI_GET_GRAINLIST = 20,
+            REMOTE_PRI_GET_GRAINLIST_AWAITING = 21,
+            REMOTE_PRI_UPLOADING_GRAINS = 22,
+            REMOTE_PRI_UPLOADING_GRAINS_AWAITING = 23
         }
 
 
@@ -406,8 +419,40 @@ namespace SandpiperInspector
 
 
 
+        public async Task<bool> sendHeartbeat()
+        {
 
 
+            bool returnVal = false;
+            try
+            {
+                string source = "SandpiperInspector";
+                string reportdate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
+                string encodedpayload = Convert.ToBase64String(Encoding.UTF8.GetBytes("[{ \"t\":\"" + reportdate + "\",\"n\":\"heartbeat\",\"v\":1}]"));
+                string signingsecret = "sandpiper";
+                string signature = md5(source + encodedpayload + signingsecret);
+
+                var requestData = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri("https://aps.dev/FNKDPR/report.php?f=" + source + "&p=" + encodedpayload + "&s=" + signature.ToLower() )
+                };
+
+                HttpResponseMessage response = await client.SendAsync(requestData);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    returnVal=true; //historyRecords.Add("successful callHome(): " + serverGrainsResponse.message);
+                }
+
+                response.Dispose();
+            }
+            catch (Exception ex)
+            {
+                returnVal = false; //  historyRecords.Add("callHome() error - " + ex.Message);
+            }
+            return returnVal;
+        }
 
 
         public async Task<List<slice>> getSlicesAsync(string path, JWT jwt)
@@ -445,6 +490,49 @@ namespace SandpiperInspector
             }
             return slices;
         }
+
+
+        public async Task<bool> deleteSliceAsync(string path, JWT jwt)
+        {
+            slicesResponse serverSlicesResponse = new slicesResponse();
+            try
+            {
+                var requestData = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Delete,
+                    RequestUri = new Uri(path)
+                };
+
+                requestData.Headers.TryAddWithoutValidation("Authorization", String.Format("Bearer {0}", jwt.token));
+
+                HttpResponseMessage response = await client.SendAsync(requestData);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseString = await response.Content.ReadAsStringAsync();
+                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
+
+                    JavaScriptSerializer serializer = new JavaScriptSerializer();
+                    serverSlicesResponse = serializer.Deserialize<slicesResponse>(responseString);
+                    historyRecords.Add("Delete slice response message - " + serverSlicesResponse.message);
+                }
+                else
+                {// something other than 200 (success) code back from the other end 
+                    historyRecords.Add("Slice delete error - " + response.ReasonPhrase);
+                }
+            }
+            catch (Exception ex)
+            {
+                historyRecords.Add("Slice delete error - " + ex.Message);
+            }
+            return true;
+        }
+
+
+
+
+
+
 
         public string Base64Encode(string plainText)
         {
@@ -1023,30 +1111,83 @@ namespace SandpiperInspector
         }
 
 
-
-        public bool updateSliceTransferList()
+        //slicesToTransfer and slicesToDrop lists will be populated based on current localSlices and remoteSlices lists and my current role (primary vs secondary)
+        public void updateSliceHitlists()
         {
-            // 
-            slicesToTransfer.Clear();
+            slicesToAdd.Clear();
+            slicesToUpdate.Clear();
+            slicesToDrop.Clear();
+            bool hashMatch = true;
+            bool foundRemoteSlice = false;
+            bool foundLocalSlice = false;
 
-
-            if (myRole == 0)
+            if(myRole == 0)
             {// local client is primary
 
+                foreach (slice localSlice in localSlices)
+                {
+                    foundRemoteSlice = false;
+                    hashMatch = true;
 
+                    foreach (slice remoteSlice in remoteSlices)
+                    {
+                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        {// found a sliceid match
 
+                            foundRemoteSlice = true;
 
+                            if (remoteSlice.hash != localSlice.hash)
+                            {
+                                hashMatch = false;
+                            }
+                            break;
+                        }
+                    }
 
+                    if (!foundRemoteSlice)
+                    {// no remote slice was found. put it on the "add" list  
+                        slice newSlice = new slice();
+                        newSlice.slice_id = localSlice.slice_id; newSlice.slice_type = localSlice.slice_type; newSlice.name = localSlice.name; newSlice.slicemetadata = localSlice.slicemetadata; newSlice.hash = localSlice.hash;
+                        slicesToAdd.Add(newSlice);
+                    }
 
+                    if (!hashMatch)
+                    {// no remote slice was found, or it was found with non-matching hash. We need to push this slice into the remote secondary
+                        slice newSlice = new slice();
+                        newSlice.slice_id = localSlice.slice_id; newSlice.slice_type = localSlice.slice_type; newSlice.name = localSlice.name; newSlice.slicemetadata = localSlice.slicemetadata; newSlice.hash = localSlice.hash;
+                        slicesToUpdate.Add(newSlice);
+                    }
+                }
 
+                // build a droplist of remote slices (ones that are in the remote and not local)
+
+                foreach (slice remoteSlice in remoteSlices)
+                {
+                    foundLocalSlice = false;
+                    foreach (slice localSlice in localSlices)
+                    {
+                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        {// found a sliceid match
+                            foundLocalSlice = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundLocalSlice)
+                    {
+                        slice newSlice = new slice();
+                        newSlice.slice_id = remoteSlice.slice_id; newSlice.slice_type = remoteSlice.slice_type; newSlice.name = remoteSlice.name; newSlice.slicemetadata = remoteSlice.slicemetadata; newSlice.hash = remoteSlice.hash;
+                        slicesToDrop.Add(newSlice);
+                    }
+                }
             }
             else
             {// local client is secondary 
 
-                foreach (slice remoteSlice in availableSlices)
+                foreach (slice remoteSlice in remoteSlices)
                 {
-                    bool foundLocalSlice = false;
-                    bool hashMatch = true;
+                    foundLocalSlice = false;
+                    hashMatch = true;
 
                     foreach (slice localSlice in localSlices)
                     {
@@ -1064,23 +1205,46 @@ namespace SandpiperInspector
                         }
                     }
 
-                    if (!foundLocalSlice || !hashMatch)
-                    {// no local slice was found, or it was found with non-matching hash. We need to get the remote (primary) slice
+                    if (!foundLocalSlice)
+                    {// no local slice was found
                         slice newSlice = new slice();
                         newSlice.slice_id = remoteSlice.slice_id; newSlice.slice_type = remoteSlice.slice_type; newSlice.name = remoteSlice.name; newSlice.slicemetadata = remoteSlice.slicemetadata; newSlice.hash = remoteSlice.hash;
-                        slicesToTransfer.Add(newSlice);
+                        slicesToAdd.Add(newSlice);
                     }
 
+                    if (!hashMatch)
+                    {// slice found with non-matching hash. We need to get the remote (primary) slice
+                        slice newSlice = new slice();
+                        newSlice.slice_id = remoteSlice.slice_id; newSlice.slice_type = remoteSlice.slice_type; newSlice.name = remoteSlice.name; newSlice.slicemetadata = remoteSlice.slicemetadata; newSlice.hash = remoteSlice.hash;
+                        slicesToUpdate.Add(newSlice);
+                    }
                 }
 
+                //determine a droplist of local slices (ones that are local but not in remote list)
+                foreach (slice localSlice in localSlices)
+                {
+                    foundRemoteSlice = false;
+                    foreach (slice remoteSlice in remoteSlices)
+                    {
+                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        {// found a sliceid match
+                            foundRemoteSlice = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundRemoteSlice)
+                    {
+                        slice newSlice = new slice();
+                        newSlice.slice_id = localSlice.slice_id; newSlice.slice_type = localSlice.slice_type; newSlice.name = localSlice.name; newSlice.slicemetadata = localSlice.slicemetadata; newSlice.hash = localSlice.hash;
+                        slicesToDrop.Add(newSlice);
+                    }
+                }
             }
-
-
-            return true;
         }
 
 
-
+       
 
     }
 }

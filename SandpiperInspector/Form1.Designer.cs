@@ -56,10 +56,7 @@
             this.textBoxTranscript = new System.Windows.Forms.TextBox();
             this.tabPageRemoteContent = new System.Windows.Forms.TabPage();
             this.buttonNewRemoteSlice = new System.Windows.Forms.Button();
-            this.buttonUploadGrain = new System.Windows.Forms.Button();
-            this.buttonGetSubscribedSlices = new System.Windows.Forms.Button();
             this.treeViewRemoteContent = new System.Windows.Forms.TreeView();
-            this.buttonDownloadGrain = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.textBoxPlandocument = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
@@ -347,10 +344,7 @@
             // tabPageRemoteContent
             // 
             this.tabPageRemoteContent.Controls.Add(this.buttonNewRemoteSlice);
-            this.tabPageRemoteContent.Controls.Add(this.buttonUploadGrain);
-            this.tabPageRemoteContent.Controls.Add(this.buttonGetSubscribedSlices);
             this.tabPageRemoteContent.Controls.Add(this.treeViewRemoteContent);
-            this.tabPageRemoteContent.Controls.Add(this.buttonDownloadGrain);
             this.tabPageRemoteContent.Location = new System.Drawing.Point(4, 25);
             this.tabPageRemoteContent.Name = "tabPageRemoteContent";
             this.tabPageRemoteContent.Size = new System.Drawing.Size(526, 201);
@@ -368,26 +362,6 @@
             this.buttonNewRemoteSlice.UseVisualStyleBackColor = true;
             this.buttonNewRemoteSlice.Click += new System.EventHandler(this.buttonNewSlice_Click);
             // 
-            // buttonUploadGrain
-            // 
-            this.buttonUploadGrain.Location = new System.Drawing.Point(343, 170);
-            this.buttonUploadGrain.Name = "buttonUploadGrain";
-            this.buttonUploadGrain.Size = new System.Drawing.Size(76, 28);
-            this.buttonUploadGrain.TabIndex = 4;
-            this.buttonUploadGrain.Text = "Upload";
-            this.buttonUploadGrain.UseVisualStyleBackColor = true;
-            this.buttonUploadGrain.Click += new System.EventHandler(this.buttonUploadGrain_Click);
-            // 
-            // buttonGetSubscribedSlices
-            // 
-            this.buttonGetSubscribedSlices.Location = new System.Drawing.Point(267, 170);
-            this.buttonGetSubscribedSlices.Name = "buttonGetSubscribedSlices";
-            this.buttonGetSubscribedSlices.Size = new System.Drawing.Size(70, 28);
-            this.buttonGetSubscribedSlices.TabIndex = 3;
-            this.buttonGetSubscribedSlices.Text = "Refresh";
-            this.buttonGetSubscribedSlices.UseVisualStyleBackColor = true;
-            this.buttonGetSubscribedSlices.Click += new System.EventHandler(this.buttonGetSubscribedSlices_Click);
-            // 
             // treeViewRemoteContent
             // 
             this.treeViewRemoteContent.Location = new System.Drawing.Point(3, 3);
@@ -397,16 +371,6 @@
             this.treeViewRemoteContent.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeViewSubscriptions_AfterSelect);
             this.treeViewRemoteContent.Click += new System.EventHandler(this.treeViewSubscriptions_Click);
             this.treeViewRemoteContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.treeViewRemoteContent_KeyUp);
-            // 
-            // buttonDownloadGrain
-            // 
-            this.buttonDownloadGrain.Location = new System.Drawing.Point(425, 170);
-            this.buttonDownloadGrain.Name = "buttonDownloadGrain";
-            this.buttonDownloadGrain.Size = new System.Drawing.Size(98, 28);
-            this.buttonDownloadGrain.TabIndex = 1;
-            this.buttonDownloadGrain.Text = "Download";
-            this.buttonDownloadGrain.UseVisualStyleBackColor = true;
-            this.buttonDownloadGrain.Click += new System.EventHandler(this.buttonDownloadGrain_Click);
             // 
             // lblStatus
             // 
@@ -446,6 +410,7 @@
             this.pictureBoxStatus.Size = new System.Drawing.Size(21, 22);
             this.pictureBoxStatus.TabIndex = 12;
             this.pictureBoxStatus.TabStop = false;
+            this.pictureBoxStatus.Click += new System.EventHandler(this.pictureBoxStatus_Click);
             // 
             // timerHousekeeping
             // 
@@ -602,15 +567,12 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TabPage tabPageRemoteContent;
         private System.Windows.Forms.TreeView treeViewRemoteContent;
-        private System.Windows.Forms.Button buttonDownloadGrain;
-        private System.Windows.Forms.Button buttonGetSubscribedSlices;
         private System.Windows.Forms.PictureBox pictureBoxStatus;
         private System.Windows.Forms.Timer timerHousekeeping;
         private System.Windows.Forms.TabPage tabPageSettings;
         private System.Windows.Forms.Label lblLocalCacheDir;
         private System.Windows.Forms.Button buttonSelectCacheDir;
         private System.Windows.Forms.CheckBox checkBoxAutotest;
-        private System.Windows.Forms.Button buttonUploadGrain;
         private System.Windows.Forms.Button buttonValidatePlan;
         private System.Windows.Forms.TextBox textBoxPlanSchema;
         private System.Windows.Forms.Label label5;
