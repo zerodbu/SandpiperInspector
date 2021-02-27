@@ -86,8 +86,10 @@ namespace SandpiperInspector
             REMOTE_PRI_GET_SLICELIST_AWAITING = 19,
             REMOTE_PRI_GET_GRAINLIST = 20,
             REMOTE_PRI_GET_GRAINLIST_AWAITING = 21,
-            REMOTE_PRI_UPLOADING_GRAINS = 22,
-            REMOTE_PRI_UPLOADING_GRAINS_AWAITING = 23
+            REMOTE_PRI_GET_GRAINS = 22,
+            REMOTE_PRI_GET_GRAINS_AWAITING = 23
+//            REMOTE_PRI_UPLOADING_GRAINS = 24,
+//            REMOTE_PRI_UPLOADING_GRAINS_AWAITING = 25
         }
 
 
@@ -419,7 +421,7 @@ namespace SandpiperInspector
 
 
 
-        public async Task<bool> sendHeartbeat()
+        public async Task<bool> sendHeartbeat(int value)
         {
 
 
@@ -428,7 +430,7 @@ namespace SandpiperInspector
             {
                 string source = "SandpiperInspector";
                 string reportdate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
-                string encodedpayload = Convert.ToBase64String(Encoding.UTF8.GetBytes("[{ \"t\":\"" + reportdate + "\",\"n\":\"heartbeat\",\"v\":1}]"));
+                string encodedpayload = Convert.ToBase64String(Encoding.UTF8.GetBytes("[{ \"t\":\"" + reportdate + "\",\"n\":\"heartbeat\",\"v\":"+value.ToString()+"}]"));
                 string signingsecret = "sandpiper";
                 string signature = md5(source + encodedpayload + signingsecret);
 
@@ -903,6 +905,56 @@ namespace SandpiperInspector
 
             return true;
         }
+
+
+        public List<grain> grainsInLocalSlice(string slice_id)
+        {
+            List<sandpiperClient.grain> tempGrainsList = new List<sandpiperClient.grain>();
+
+            foreach (grain g in localGrainsCache)
+            {
+                if (slice_id == g.slice_id)
+                {
+                    grain ng = new grain();
+                    ng.description = g.description; ng.encoding = g.encoding; ng.grain_key = g.grain_key; ng.id = g.id; ng.payload = g.payload; ng.slice_id = g.slice_id; ng.source = g.source; ng.payload_len = g.payload_len;
+                    tempGrainsList.Add(ng);
+                }
+            }
+            return tempGrainsList;
+        }
+
+
+        // compare two gainlists (A and B) and return a new list of the grains in B that are not present in A
+        public List<grain> differentialGrainsList(List<grain> grainsA, List<grain> grainsB)
+        {
+            List<grain> diffs = new List<grain>();
+            bool found;
+
+            for (int i = 0; i <= grainsB.Count() - 1; i++)
+            {
+                found = false;
+                foreach (grain gA in grainsA)
+                {
+                    if(grainsB[i].id == gA.id)
+                    {// this grain from the "B" list was found in the "A" list - quit looking
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {// this grain from the "B" list was not found in the "A" list - add it to the results
+                    diffs.Add(grainsB[i]);
+                }
+
+
+            }
+            return diffs;
+        }
+
+
+
+
 
         public static string md5(string input)
         {
