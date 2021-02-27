@@ -88,8 +88,6 @@ namespace SandpiperInspector
             REMOTE_PRI_GET_GRAINLIST_AWAITING = 21,
             REMOTE_PRI_GET_GRAINS = 22,
             REMOTE_PRI_GET_GRAINS_AWAITING = 23
-//            REMOTE_PRI_UPLOADING_GRAINS = 24,
-//            REMOTE_PRI_UPLOADING_GRAINS_AWAITING = 25
         }
 
 
