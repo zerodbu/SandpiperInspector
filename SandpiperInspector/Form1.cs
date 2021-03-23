@@ -425,7 +425,7 @@ namespace SandpiperInspector
                     }
                     else
                     {
-                        sandpiper.historyRecords.Add("All slices in remote secondary pool exist in the local secondary pool - nothing to add");
+                        sandpiper.historyRecords.Add("All slices in remote primary pool exist in the local secondary pool - nothing to add");
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                     }
 
@@ -480,8 +480,27 @@ namespace SandpiperInspector
                         {// nothing to get 
                          // maybe update the local hash for the slice? 
                             sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
-                            sandpiper.historyRecords.Add("all grain sets are in sync even though hash comparison implied otherwise - do we need to update hashes on local slices?");
+                            sandpiper.historyRecords.Add("all grain sets are in sync even though hash comparison implied otherwise - ?? should be overwriting hashes on local slice cache with the ones we just got from the primary?");
                             lblStatus.Text = "";
+
+
+                            //overwrite local hashes in the local sliceist cache
+/*
+                            foreach (sandpiperClient.slice s in sandpiper.remoteSlices)
+                            {
+                                for (int i = 0; i <= sandpiper.localSlices.Count() - 1; i++)
+                                {
+                                    if(s.slice_id == sandpiper.localSlices[i].slice_id)
+                                    {
+                                        sandpiper.localSlices[i].hash = s.hash;
+                                    }
+                                }                            
+                            }
+                            sandpiper.writeFullCacheIndex(lblLocalCacheDir.Text);
+
+                            */
+
+
                         }
                     }
                     else
@@ -1468,6 +1487,8 @@ namespace SandpiperInspector
             // return true if a change was made to the index based on a non-existant local file
             // file record format is tab-delimited list of: grainid,sliceid,filename 
 
+            //??? verify that we are computing the hash of local grains - i think it should be happening in the funcntion
+
             // read in the slices list
             Dictionary<string, string> sliceidKeyedNames = new Dictionary<string, string>();
 
@@ -1487,7 +1508,7 @@ namespace SandpiperInspector
                         s.slice_type = fields[1];
                         s.name = fields[2];
                         s.slicemetadata = fields[3];
-                        s.hash = fields[5];
+                        s.hash = fields[4];
                         sandpiper.localSlices.Add(s);
                         if (!sliceidKeyedNames.ContainsKey(s.slice_id)) { sliceidKeyedNames.Add(s.slice_id, s.name); }
                     }
@@ -1603,7 +1624,6 @@ namespace SandpiperInspector
 
         private async void pictureBoxStatus_Click(object sender, EventArgs e)
         {
-            await sandpiper.sendHeartbeat(Convert.ToInt32(textBoxPassword.Text));
 
         }
     }

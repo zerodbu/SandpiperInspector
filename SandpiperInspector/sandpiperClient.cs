@@ -418,43 +418,6 @@ namespace SandpiperInspector
         }
 
 
-
-        public async Task<bool> sendHeartbeat(int value)
-        {
-
-
-            bool returnVal = false;
-            try
-            {
-                string source = "SandpiperInspector";
-                string reportdate = string.Format("{0:yyyy-MM-dd HH:mm:ss}", DateTime.Now);
-                string encodedpayload = Convert.ToBase64String(Encoding.UTF8.GetBytes("[{ \"t\":\"" + reportdate + "\",\"n\":\"heartbeat\",\"v\":"+value.ToString()+"}]"));
-                string signingsecret = "sandpiper";
-                string signature = md5(source + encodedpayload + signingsecret);
-
-                var requestData = new HttpRequestMessage
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri("https://aps.dev/FNKDPR/report.php?f=" + source + "&p=" + encodedpayload + "&s=" + signature.ToLower() )
-                };
-
-                HttpResponseMessage response = await client.SendAsync(requestData);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    returnVal=true; //historyRecords.Add("successful callHome(): " + serverGrainsResponse.message);
-                }
-
-                response.Dispose();
-            }
-            catch (Exception ex)
-            {
-                returnVal = false; //  historyRecords.Add("callHome() error - " + ex.Message);
-            }
-            return returnVal;
-        }
-
-
         public async Task<List<slice>> getSlicesAsync(string path, JWT jwt)
         {
             List<slice> slices = new List<slice>();
@@ -844,16 +807,21 @@ namespace SandpiperInspector
                 using (StreamWriter file = new StreamWriter(cacheDir + @"\slicelist.txt", false))
                 {
                     string hashTemp = "";
+                    List<string> stringListTemp = new List<string>();
+
                     foreach (slice s in localSlices)
                     {
                         // calc the hash of grainids claiming this slice
                         hashTemp = "";
+                        stringListTemp.Clear();
                         foreach (grain g in localGrainsCache)
                         {
-                            if (g.slice_id == s.slice_id) { hashTemp += g.id; }
+                            if (g.slice_id == s.slice_id) { stringListTemp.Add(g.id); }
                         }
+                        // need to sort the gains list by their ID to ensure the same hash sequence as the other end used
+                        stringListTemp.Sort();
 
-                        file.WriteLine(s.slice_id + "\t" + s.slice_type + "\t" + s.name + "\t" + s.slicemetadata + "\t" + md5(hashTemp) + "\t" + s.hash);
+                        file.WriteLine(s.slice_id + "\t" + s.slice_type + "\t" + s.name + "\t" + s.slicemetadata + "\t" + md5(String.Join("",stringListTemp)).ToLower() + "\t" + s.hash);
                     }
                     slicesSuccess = true;
                 }
