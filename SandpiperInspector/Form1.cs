@@ -5,6 +5,8 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using System.Data.SQLite;
+
 
 /*
  * to-do list 
@@ -20,6 +22,10 @@ namespace SandpiperInspector
 {
     public partial class Form1 : Form
     {
+
+        SQLiteConnection sqlite_conn;
+
+
         sandpiperClient sandpiper = new sandpiperClient();
 
         private TabPage hiddenTranscriptTab = new TabPage();
@@ -140,6 +146,12 @@ namespace SandpiperInspector
                     fwatcher.EnableRaisingEvents = true;
                     fwatcher.Created += new FileSystemEventHandler(cacheFolderChange);
                     fwatcher.Deleted += new FileSystemEventHandler(cacheFolderChange);
+
+                    sqlite_conn = new SQLiteConnection("Data Source=" + lblLocalCacheDir.Text + "\\sandpiper.db; Version = 3; New = True; Compress = True; ");
+                    sqlite_conn.Open();
+
+
+
                 }
             }
 
@@ -485,7 +497,7 @@ namespace SandpiperInspector
 
 
                             //overwrite local hashes in the local sliceist cache
-/*
+                            /*
                             foreach (sandpiperClient.slice s in sandpiper.remoteSlices)
                             {
                                 for (int i = 0; i <= sandpiper.localSlices.Count() - 1; i++)
@@ -497,9 +509,8 @@ namespace SandpiperInspector
                                 }                            
                             }
                             sandpiper.writeFullCacheIndex(lblLocalCacheDir.Text);
-
                             */
-
+                            
 
                         }
                     }
@@ -1453,7 +1464,7 @@ namespace SandpiperInspector
                 FileInfo[] Files = d.GetFiles("*.*");
                 foreach (FileInfo file in Files)
                 {
-                    if (file.Name == "grainlist.txt" || file.Name == "slicelist.txt") { continue; }
+                    if (file.Name == "grainlist.txt" || file.Name == "slicelist.txt" || file.Name == "sandpiper.db") { continue; }
                     if (!indexedFilenames.ContainsKey(file.Name))
                     { // our cacheindex is not aware of this file
 
@@ -1626,6 +1637,28 @@ namespace SandpiperInspector
         {
 
         }
+
+
+        static SQLiteConnection CreateConnection()
+        {
+            SQLiteConnection sqlite_conn;
+            // Create a new database connection:
+            sqlite_conn = new SQLiteConnection("Data Source=database.db; Version = 3; New = True; Compress = True; ");
+                 // Open the connection:
+            try
+            {
+                sqlite_conn.Open();
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return sqlite_conn;
+        }
+
+
+
+
     }
 
 }
