@@ -68,7 +68,6 @@
             this.radioButtonRolePrimary = new System.Windows.Forms.RadioButton();
             this.lblNodeID = new System.Windows.Forms.Label();
             this.textBoxNodeID = new System.Windows.Forms.TextBox();
-            this.buttonSync = new System.Windows.Forms.Button();
             this.timerLocalFilesIndexer = new System.Windows.Forms.Timer(this.components);
             this.timerTransscriptRefresh = new System.Windows.Forms.Timer(this.components);
             this.tabControl1.SuspendLayout();
@@ -481,23 +480,6 @@
             this.textBoxNodeID.TabIndex = 17;
             this.textBoxNodeID.Leave += new System.EventHandler(this.textBoxNodeID_Leave);
             // 
-            // buttonSync
-            // 
-            this.buttonSync.Enabled = false;
-            this.buttonSync.Location = new System.Drawing.Point(441, 181);
-            this.buttonSync.Name = "buttonSync";
-            this.buttonSync.Size = new System.Drawing.Size(105, 33);
-            this.buttonSync.TabIndex = 18;
-            this.buttonSync.Text = "Sync";
-            this.buttonSync.UseVisualStyleBackColor = true;
-            this.buttonSync.Click += new System.EventHandler(this.buttonSync_Click);
-            // 
-            // timerLocalFilesIndexer
-            // 
-            this.timerLocalFilesIndexer.Enabled = true;
-            this.timerLocalFilesIndexer.Interval = 1000;
-            this.timerLocalFilesIndexer.Tick += new System.EventHandler(this.timerLocalFilesIndexer_Tick);
-            // 
             // timerTransscriptRefresh
             // 
             this.timerTransscriptRefresh.Enabled = true;
@@ -509,7 +491,6 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(703, 676);
-            this.Controls.Add(this.buttonSync);
             this.Controls.Add(this.textBoxNodeID);
             this.Controls.Add(this.lblNodeID);
             this.Controls.Add(this.groupBoxRole);
@@ -585,7 +566,6 @@
         private System.Windows.Forms.TabPage tabPageLocalConntent;
         private System.Windows.Forms.TreeView treeViewLocalContent;
         private System.Windows.Forms.Button buttonNewLocalSlice;
-        private System.Windows.Forms.Button buttonSync;
         private System.Windows.Forms.Button buttonNewRemoteSlice;
         private System.Windows.Forms.Button buttonEditLocalSlice;
         private System.Windows.Forms.Button buttonDeleteLocalSlice;

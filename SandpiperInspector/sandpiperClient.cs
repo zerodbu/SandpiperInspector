@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -36,7 +37,6 @@ namespace SandpiperInspector
         public grain selectedGrain = new grain();
         public List<slice> remoteSlices = new List<slice>();
         public slice selectedSlice = new slice();
-        public List<slice> localSlices = new List<slice>();
 
         public bool activeSession;
         public bool awaitingServerResponse;
@@ -50,14 +50,14 @@ namespace SandpiperInspector
         public int historyRecordCountTemp;
         public string plandocumentSchema;   // the active one
         public string defaultPlandocumentSchema; // for use if the user "resets to default"
-        public List<grain> localGrainsCache = new List<grain>();
         public List<slice> slicesToUpdate = new List<slice>();
         public List<slice> slicesToAdd = new List<slice>();
         public List<slice> slicesToDrop = new List<slice>();
         public List<grain> grainsToTransfer = new List<grain>();
         public List<grain> grainsToDrop = new List<grain>();
 
-
+        private SQLiteConnection sqlite_conn = new SQLiteConnection();
+        public bool SQliteDatabaseInitialized = false;
 
 
         public enum interactionStates : int
@@ -109,6 +109,7 @@ namespace SandpiperInspector
             public string encoding;
             public string payload;
             public long payload_len;
+            public string localfilename;
 
             public void clear()
             {
@@ -310,6 +311,13 @@ namespace SandpiperInspector
             {
                 historyRecords.Add("Grains error - " + ex.Message);
             }
+
+            for (int i = 0; i <= responseData.grains.Count() - 1; i++)
+            {// prefix the soure with the grainid to make it unique for local file storage
+                responseData.grains[i].localfilename = responseData.grains[i].id + " - " + responseData.grains[i].source;
+            }
+
+
             return responseData.grains;
         }
 
@@ -492,11 +500,6 @@ namespace SandpiperInspector
         }
 
 
-
-
-
-
-
         public string Base64Encode(string plainText)
         {
             var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
@@ -574,319 +577,68 @@ namespace SandpiperInspector
 
 
 
-
-        public string reUUIDslice(string slice_id)
-        {
-            string new_id = Guid.NewGuid().ToString("D"); // just in case we need one
-            string returnValue = "";
-
-            for (int i = 0; i <= localGrainsCache.Count() - 1; i++)
-            {
-                if (localGrainsCache[i].slice_id == slice_id)
-                {
-                    localGrainsCache[i].slice_id = new_id;
-                    returnValue = new_id;
-                }
-            }
-
-            for (int i = 0; i <= localSlices.Count() - 1; i++)
-            {
-                if (localSlices[i].slice_id == slice_id)
-                {
-                    localSlices[i].slice_id = new_id;
-                    returnValue = new_id;
-                }
-            }
-
-            return returnValue;
-        }
-
-
-        public bool deleteLocalSice(slice s, string cacheDir)
-        {
-            // remove a slice and all of its grains from the local cache directory and update the index files
-
-            bool deletedSlice = false;
-            bool deletedGrain = false;
-            //readCacheIndex(cacheDir);
-
-            int sliceElementToRemove = -1;
-            int grainElementToRemove;
-
-            int i = 0;
-            foreach (slice localSlice in localSlices)
-            {
-                if (localSlice.slice_id == s.slice_id) { sliceElementToRemove = i; break; }
-                i++;
-            }
-
-            if (sliceElementToRemove >= 0)
-            {// slice given was found in slicelist 
-
-                localSlices.RemoveAt(sliceElementToRemove);
-                historyRecords.Add("Deleted slice: " + s.name);
-
-                deletedGrain = true;
-                while (deletedGrain)
-                {
-                    deletedGrain = false;
-
-                    i = 0; grainElementToRemove = -1;
-                    foreach (grain localGrain in localGrainsCache)
-                    {// look for grains claiming the given slice and delete them
-                        if (localGrain.slice_id == s.slice_id) { grainElementToRemove = i; break; }
-                        i++;
-                    }
-
-                    if (grainElementToRemove >= 0)
-                    {
-                        if (File.Exists(cacheDir + @"\" + localGrainsCache[grainElementToRemove].source))
-                        {
-                            historyRecords.Add("Removing grain " + localGrainsCache[grainElementToRemove].id + " (" + localGrainsCache[grainElementToRemove].source + ") from local cache");
-                            File.Delete(cacheDir + @"\" + localGrainsCache[grainElementToRemove].source);
-                            localGrainsCache.RemoveAt(grainElementToRemove);
-                        }
-                        deletedGrain = true;
-                    }
-                }
-
-                writeFullCacheIndex(cacheDir);
-            }
-            return (deletedGrain || deletedSlice);
-        }
-
-
-
-        public bool deleteLocalGrain(grain g, string cacheDir)
-        {
-            bool returnValue = false;
-            //readCacheIndex(cacheDir);
-
-            int elementToRemove = -1;
-            int i = 0;
-            foreach (grain localGrain in localGrainsCache)
-            {
-                if (localGrain.id == g.id) { elementToRemove = i; break; }
-                i++;
-            }
-
-            if (elementToRemove >= 0)
-            {
-                if (File.Exists(cacheDir + @"\" + localGrainsCache[elementToRemove].source))
-                {
-                    historyRecords.Add("Removing grain " + localGrainsCache[elementToRemove].id + " (" + localGrainsCache[elementToRemove].source + ") from local cache");
-                    File.Delete(cacheDir + @"\" + localGrainsCache[elementToRemove].source);
-                    localGrainsCache.RemoveAt(elementToRemove);
-                }
-
-                writeFullCacheIndex(cacheDir);
-            }
-            return returnValue;
-        }
-
-
-        public void addMissingLocalSlices(List<slice> slices, string cacheDir)
+        public void addMissingLocalSlices(List<slice> slices)
         {
             // add slices to the local list from given list if they do not already exist
-            bool existingSlice;
-            for (int i = 0; i <= slices.Count() - 1; i++)
+            foreach (slice s in slices)
             {
-                existingSlice = false;
-                foreach (sandpiperClient.slice s in localSlices)
+                if(!localSliceExists(s.slice_id))
                 {
-                    if (s.slice_id == slices[i].slice_id) 
-                    {// slice exists already in local cache
-                        existingSlice = true; break; 
-                    }
+                    addLocalSlice(s);
+                    historyRecords.Add("Added slice " + s.slice_id + " (" + s.name + ") to local pool");
                 }
-                if (!existingSlice) { localSlices.Add(slices[i]); }
             }
-            writeFullCacheIndex(cacheDir);
         }
 
-        public bool dropRogueLocalSlices(List<slice> slices, string cacheDir)
+        public int dropRogueLocalSlices(List<slice> remoteSlices)
         {
-            // drop slices (and all their grains) if they do not appear in the given list
+            // drop slices (and all their grain connections) if they do not appear in the given list
             // this is for syncing the local as secondary
-            
-            bool existingSlice;
-            bool removedSlice;
-            bool removedGrain;
-            bool updateCache=false;
+            int returnVal = 0;
+
             List<string> sliceidsToDrop = new List<string>();
+            List<string> remoteSliceids = new List<string>();
+            foreach (slice s in remoteSlices){remoteSliceids.Add(s.slice_id);}
 
-            removedSlice = true;
-            while (removedSlice)
+            List<slice> localSlices = getLocalSlices();
+            foreach (slice s in localSlices)
             {
-                removedSlice = false;
-
-                for (int i = 0; i <= localSlices.Count() - 1; i++)
+                if (!remoteSliceids.Contains(s.slice_id))
                 {
-                    existingSlice = false;
-
-                    foreach (slice s in slices)
-                    {
-                        if (localSlices[i].slice_id == s.slice_id)
-                        {// local slice list contains this given slice - no need to drop the local one
-                            existingSlice = true; break;
-                        }
-                    }
-
-                    if (!existingSlice)
-                    {// current slice (s) was not found in the local cache list. add the relative element number to the drop list
-                        sliceidsToDrop.Add(localSlices[i].slice_id);
-                        removedSlice = true;
-                        historyRecords.Add("Removing slice " + localSlices[i].slice_id + " (" + localSlices[i].name + ") from local cache");
-                        localSlices.RemoveAt(i);
-                        updateCache = true;
-                        break;
-                    }
+                    historyRecords.Add("Removing local slice " + s.slice_id + " (" + s.name + ") and all of its grain connections from local pool");
+                    dropLocalSlice(s.slice_id);
                 }
             }
 
-            removedGrain = true;
-            while (removedGrain)
-            {
-                removedGrain = false;
-
-                for (int i = 0; i <= localGrainsCache.Count() - 1; i++)
-                {
-                    if (sliceidsToDrop.Contains(localGrainsCache[i].slice_id))
-                    {// this grain should be dropped because is is part of a slice that is being dropped
-
-                        if (File.Exists(cacheDir + @"\" + localGrainsCache[i].source))
-                        {
-                            historyRecords.Add("Removing grain " + localGrainsCache[i].id + " (" + localGrainsCache[i].source + ") from local cache");
-                            File.Delete(cacheDir + @"\" + localGrainsCache[i].source);
-                            localGrainsCache.RemoveAt(i);
-                            removedGrain = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (updateCache) { writeFullCacheIndex(cacheDir); }
-            return removedSlice;
+            return returnVal;
         }
 
 
 
-        public bool writeFullCacheIndex(string cacheDir)
-        {
-            // rebuild (from scratch) the local grains list and slice list files from what is memory resident (localGrainsCache and localSlices
-
-
-            // grain index file format: tab-delimited list of: grainid,sliceid,filename
-            // slice index file format: tab-delimited list of: slice_id, slice_type, name, slicemetadata, localgrainidhash, remotehash
-
-            bool grainsSuccess = false;
-            bool slicesSuccess = false;
-
-            
-
-
-            try
-            {
-                using (StreamWriter file = new StreamWriter(cacheDir + @"\grainlist.txt", false))
-                {
-                    foreach (grain g in localGrainsCache)
-                    {
-                        file.WriteLine(g.id + "\t" + g.slice_id + "\t" + g.source);
-                    }
-                    grainsSuccess = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                historyRecords.Add("writeCacheIndex() failed writing grains index: " + ex.Message);
-            }
-
-            try
-            {
-                using (StreamWriter file = new StreamWriter(cacheDir + @"\slicelist.txt", false))
-                {
-                    string hashTemp = "";
-                    List<string> stringListTemp = new List<string>();
-
-                    foreach (slice s in localSlices)
-                    {
-                        // calc the hash of grainids claiming this slice
-                        hashTemp = "";
-                        stringListTemp.Clear();
-                        foreach (grain g in localGrainsCache)
-                        {
-                            if (g.slice_id == s.slice_id) { stringListTemp.Add(g.id); }
-                        }
-                        // need to sort the gains list by their ID to ensure the same hash sequence as the other end used
-                        stringListTemp.Sort();
-
-                        file.WriteLine(s.slice_id + "\t" + s.slice_type + "\t" + s.name + "\t" + s.slicemetadata + "\t" + md5(String.Join("",stringListTemp)).ToLower() + "\t" + s.hash);
-                    }
-                    slicesSuccess = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                historyRecords.Add("writeCacheIndex() failed writing slices list: " + ex.Message);
-            }
-
-            return (grainsSuccess & slicesSuccess);
-        }
 
 
         public bool writeFilegrainToFile(sandpiperClient.grain filegrain, string cacheDir)
         {
-            for (int i =0; i<=localGrainsCache.Count()-1; i++)
-            {// find the existing grain in the cachelist and remove it if it exists
-                if (localGrainsCache[i].id == filegrain.id)
-                {
-                    localGrainsCache.RemoveAt(i);
-                    break;
-                }
-            }
-
-            localGrainsCache.Add(filegrain); // att this grain to the cachelist
             
             if (filegrain.encoding == "z64")
             {
-                //ccc
+                
                 byte[] payloadBytes = unz64(filegrain.payload);
-                File.WriteAllBytes(cacheDir + @"\" + filegrain.source, payloadBytes);
+                File.WriteAllBytes(cacheDir + @"\" + filegrain.localfilename, payloadBytes);
             }
 
             if (filegrain.encoding == "b64")
             {// full-range 8bit binary data (not compressed) is to be expected
                 byte[] payloadBytes = Convert.FromBase64String(filegrain.payload);
-                File.WriteAllBytes(cacheDir + @"\" + filegrain.source, payloadBytes);
-                //ccc
+                File.WriteAllBytes(cacheDir + @"\" + filegrain.localfilename, payloadBytes);
             }
 
             if (filegrain.encoding == "raw")
             {// probably a text file 
-                File.WriteAllBytes(cacheDir + @"\" + filegrain.source, Encoding.UTF8.GetBytes(filegrain.payload));
+                File.WriteAllBytes(cacheDir + @"\" + filegrain.localfilename, Encoding.UTF8.GetBytes(filegrain.payload));
             }
-
-            writeFullCacheIndex(cacheDir);
 
             return true;
-        }
-
-
-        public List<grain> grainsInLocalSlice(string slice_id)
-        {
-            List<sandpiperClient.grain> tempGrainsList = new List<sandpiperClient.grain>();
-
-            foreach (grain g in localGrainsCache)
-            {
-                if (slice_id == g.slice_id)
-                {
-                    grain ng = new grain();
-                    ng.description = g.description; ng.encoding = g.encoding; ng.grain_key = g.grain_key; ng.id = g.id; ng.payload = g.payload; ng.slice_id = g.slice_id; ng.source = g.source; ng.payload_len = g.payload_len;
-                    tempGrainsList.Add(ng);
-                }
-            }
-            return tempGrainsList;
         }
 
 
@@ -1138,6 +890,9 @@ namespace SandpiperInspector
             bool hashMatch = true;
             bool foundRemoteSlice = false;
             bool foundLocalSlice = false;
+            //ddd
+
+            List<slice> localSlices = getLocalSlices();
 
             if(myRole == 0)
             {// local client is primary
@@ -1154,7 +909,7 @@ namespace SandpiperInspector
 
                             foundRemoteSlice = true;
 
-                            if (remoteSlice.hash != localSlice.hash)
+                            if (remoteSlice.hash.ToLower() != localSlice.hash.ToLower())
                             {
                                 hashMatch = false;
                             }
@@ -1215,7 +970,7 @@ namespace SandpiperInspector
 
                             foundLocalSlice = true;
 
-                            if (remoteSlice.hash != localSlice.hash)
+                            if (remoteSlice.hash.ToLower() != localSlice.hash.ToLower())
                             {
                                 hashMatch = false;
                             }
@@ -1262,7 +1017,507 @@ namespace SandpiperInspector
         }
 
 
-       
+        public bool SQLiteInit(string cacheDir)
+        {
+            bool returnVal = false;
+            sqlite_conn.ConnectionString = "Data Source=" + cacheDir + @"\sandpiper.db; Version = 3; New = True; Compress = True;";
+
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_conn.Open();
+
+                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS slice (sliceid VARCHAR(64) PRIMARY KEY, slicetype VARCHAR(64), name VARCHAR(255), slicemetadata TEXT, remotehash VARCHAR(64), localhash VARCHAR(64))";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON slice (sliceid);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+
+                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS grain (id INTEGER PRIMARY KEY AUTOINCREMENT, grainid VARCHAR(64), source VARCHAR(255), payload_len INTEGER, grain_key VARCHAR(32), description VARCHAR(255), encoding VARCHAR(32), payload TEXT)";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON grain (grainid);";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grain_key ON grain (grain_key);";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_source ON grain (source);";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_payload_len ON grain (payload_len);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+
+
+                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS slice_grain (id INTEGER PRIMARY KEY AUTOINCREMENT, sliceid VARCHAR(64), grainid VARCHAR(64))";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON slice_grain (sliceid);";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON slice_grain (grainid);";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid_grainid ON slice_grain (sliceid,grainid);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+
+
+
+                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS activity (id INTEGER PRIMARY KEY AUTOINCREMENT, description varchar(255), planid VARCHAR(64), sliceid VARCHAR(64), grainid VARCHAR(64), timestamp DATETIME)";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_planid ON activity (planid);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON activity (sliceid);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON activity (grainid);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_timestamp ON activity (timestamp);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_description ON activity (description);";
+                    sqlite_cmd.ExecuteNonQuery();
+
+
+
+
+                    // create indexes on activity table here
+
+
+                    sqlite_cmd.CommandText = "PRAGMA journal_mode = WAL;";
+                    sqlite_cmd.ExecuteNonQuery();
+                    sqlite_cmd.CommandText = "PRAGMA synchronous = NORMAL;";
+                    sqlite_cmd.ExecuteNonQuery();
+                    
+
+                    SQliteDatabaseInitialized = true;
+                    returnVal = true;
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("failed opening SQLite database: " + ex.Message);
+                }
+            }
+            return returnVal;
+        }
+
+
+        public bool localSliceExists(string sliceid)
+        {
+            bool returnVal = false;
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT sliceid FROM slice where sliceid='" + sliceid + "'";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        if (sqlite_datareader.Read())
+                        {
+                            returnVal = true;
+                        }
+                    }
+                }
+            }
+            return returnVal;
+        }
+
+        public string localSliceHash(string sliceid)
+        {
+            string returnVal = "";
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT grainhash FROM slice where sliceid='" + sliceid + "'";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        if (sqlite_datareader.Read())
+                        {
+                            returnVal = sqlite_datareader.GetString(0);
+                        }
+                    }
+                }
+            }
+            return returnVal;
+        }
+
+
+        public bool localGrainSliceRecordExists(string grainid, string sliceid)
+        {
+            bool returnVal = false;
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT id FROM slice_grain where sliceid='" + sliceid + "' and grainid='"+grainid+"'";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        if (sqlite_datareader.Read())
+                        {
+                            returnVal = true;
+                        }
+                    }
+                }
+            }
+            return returnVal;
+        }
+
+        public bool localGrainRecordExists(string grainid)
+        {
+            bool returnVal = false;
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT id FROM grain where grainid='" + grainid + "'";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        if (sqlite_datareader.Read())
+                        {
+                            returnVal = true;
+                        }
+                    }
+                }
+            }
+            return returnVal;
+        }
+
+
+
+
+        public slice getLocalSlice(string sliceid)
+        {
+            slice s = null;
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT sliceid, slicetype, name, slicemetadata, remotehash, localhash FROM slice where sliceid='" + sliceid + "'";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        s = new slice();
+                        if(sqlite_datareader.Read())
+                        {
+                            s.slice_id = sqlite_datareader.GetString(0);
+                            s.slice_type = sqlite_datareader.GetString(1);
+                            s.name = sqlite_datareader.GetString(2);
+                            s.slicemetadata= sqlite_datareader.GetString(3);
+                            s.hash = sqlite_datareader.GetString(4);
+                        }
+                    }
+                }
+            }
+            return s;
+        }
+
+        public List<slice> getLocalSlices()
+        {
+            List<slice> returnVal = new List<slice>();
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT sliceid, slicetype, name, slicemetadata, localhash FROM slice order by name";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        while (sqlite_datareader.Read())
+                        {
+                            slice s = new slice();
+                            s.slice_id = sqlite_datareader.GetString(0);
+                            s.slice_type = sqlite_datareader.GetString(1);
+                            s.name = sqlite_datareader.GetString(2);
+                            s.slicemetadata = sqlite_datareader.GetString(3);
+                            s.hash = sqlite_datareader.GetString(4);
+                            returnVal.Add(s);
+                        }
+                    }
+                }
+            }
+            return returnVal;
+        }
+
+
+
+
+
+
+        public List<grain> getGrainsInLocalSlice(string sliceid, bool with_payload)
+        {
+            List<grain> grainslist = new List<grain>();
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    if (with_payload)
+                    {
+                        sqlite_cmd.CommandText = "SELECT grain.grainid, slice_grain.sliceid, source, payload_len, grain_key, description, encoding, payload FROM grain,slice_grain where grain.grainid=slice_grain.grainid and slice_grain.sliceid='" + sliceid + "'";
+                    }
+                    else
+                    {// leave out payload
+                        sqlite_cmd.CommandText = "SELECT grain.grainid, slice_grain.sliceid, source, payload_len, grain_key, description, encoding FROM grain,slice_grain where grain.grainid=slice_grain.grainid and slice_grain.sliceid='" + sliceid + "'";
+                    }
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+
+                        while (sqlite_datareader.Read())
+                        {
+                            grain g = new grain();
+                            g.id = sqlite_datareader.GetString(0);
+                            g.slice_id = sqlite_datareader.GetString(1);
+                            g.source = sqlite_datareader.GetString(2);
+                            g.payload_len = sqlite_datareader.GetInt32(3);
+                            g.grain_key = sqlite_datareader.GetString(4);
+                            g.description = sqlite_datareader.GetString(5);
+                            g.encoding = sqlite_datareader.GetString(6);
+                            g.payload = "";
+                            if (with_payload)
+                            {
+                                g.payload = sqlite_datareader.GetString(7);
+                            }
+                            grainslist.Add(g);
+                        }
+                    }
+                }
+            }
+            return grainslist;
+        }
+
+        public int countGrainsInLocalSlice(string sliceid)
+        {
+            int returnVal = 0;
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT count(id) as graincount FROM slice_grain where sliceid='" + sliceid + "'";
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        while (sqlite_datareader.Read())
+                        {
+                            returnVal = sqlite_datareader.GetInt32(0);
+                        }
+                    }
+                }
+            }
+            return returnVal;
+        }
+
+
+        public bool addLocalSlice(slice s)
+        {
+            bool returnVal = false;
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    if (localSliceExists(s.slice_id))
+                    {// slice exists - update it
+
+                        sqlite_cmd.CommandText = "UPDATE slice set slicetype='" + s.slice_type + "', name='" + s.name + "', slicemetadata='" + s.slicemetadata + "', remotehash='" + s.hash + "' where sliceid='"+s.slice_id+"';";
+                        historyRecords.Add("addLocalSlice(" + s.slice_id + ") - slice record already exists. Updating existing record.");
+                        logActivity("", s.slice_id, "", "slice record updated (" + s.name + ")");
+                    }
+                    else
+                    {// slice does not exist - insert it
+
+                        sqlite_cmd.CommandText = "INSERT INTO slice (sliceid, slicetype, name, slicemetadata, remotehash, localhash) VALUES ('" + s.slice_id + "','" + s.slice_type + "','" + s.name + "','" + s.slicemetadata + "','" + s.hash + "','');";
+                        logActivity("", s.slice_id, "", "slice record added ("+s.name+")");
+
+                    }
+
+                    sqlite_cmd.ExecuteNonQuery();
+                    returnVal = true;
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("addLocalSlice(" + s.slice_id + ") - failed inserting slice record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+            return returnVal;
+        }
+
+
+        public bool addLocalGrain(grain g)
+        {
+            // writes grain, slice and slice_grain, and actifity records
+            // if sliceid exists, it is not updated
+
+            //**** need to check for existance first ******
+
+
+            bool returnVal = false;
+
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    if(!localGrainRecordExists(g.id))
+                    {
+                        sqlite_cmd.CommandText = "INSERT INTO grain (grainid, source, payload_len, grain_key, description, encoding, payload) VALUES ('" + g.id + "', '" + g.source + "'," + g.payload_len.ToString() + ",'" + g.grain_key + "','" + g.description + "','" + g.encoding + "','" + g.payload + "');";
+                        sqlite_cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        historyRecords.Add("addLocalGrain(() - grain " + g.id + " already exists. Skipping grain insert");
+                    }
+
+                    if (!localGrainSliceRecordExists(g.id, g.slice_id))
+                    {
+                        sqlite_cmd.CommandText = "INSERT INTO slice_grain (sliceid, grainid) VALUES ('" + g.slice_id + "', '" + g.id + "');";
+                        sqlite_cmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        historyRecords.Add("addLocalGrain(() - slice/grain (" + g.slice_id + " / " + g.id + ") record already exists. Skipping slice_grain insert");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("addLocalGrain(() - failed inserting  grain or slice_grain record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+
+            return returnVal;
+        }
+
+        /** delete slice (by its uuid) and all connections to grains (slice_grain records). 
+         * does not delete the grain records
+         * 
+         */
+        public bool dropLocalSlice(string sliceid)
+        {
+            bool returnVal = false;
+
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_cmd.CommandText = "DELETE FROM slice where sliceid='" + sliceid + "'";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    sqlite_cmd.CommandText = "DELETE FROM slice_grain where sliceid='" + sliceid + "'";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    returnVal = true;
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("dropLocalSlice("+sliceid+") - failed deleting slice or slice_grain records: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+
+            return returnVal;
+        }
+
+        public void refreshAllLocalSliceHashes()
+        {
+            List<sandpiperClient.slice> localSlices = getLocalSlices();
+            foreach (sandpiperClient.slice s in localSlices)
+            {
+                refreshLocalSliceHash(s.slice_id);
+            }
+        }
+
+
+        public bool refreshLocalSliceHash(string sliceid)
+        {
+            bool returnVal = false;
+            List<string> grainids = new List<string>();
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT grainid FROM slice_grain where slice_grain.sliceid='" + sliceid + "' order by grainid";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        while (sqlite_datareader.Read())
+                        {
+                            grainids.Add(sqlite_datareader.GetString(0));
+                        }
+                    }
+                }
+            }
+
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_cmd.CommandText = "UPDATE slice set localhash='" + md5(string.Join("", grainids)) + "' where sliceid='" + sliceid + "';";
+                    sqlite_cmd.ExecuteNonQuery();
+                    returnVal = true;
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("refreshLocalSliceHash("+sliceid+") - failed updating slice record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+            return returnVal;
+        }
+
+
+        public void logActivity(string grainid, string sliceid, string planid, string description)
+        {
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_cmd.CommandText = "INSERT INTO activity(description, planid, sliceid, grainid, timestamp) VALUES ('" + description + "','" + planid + "', '" + sliceid + "','" + grainid + "', DATETIME('now'));";
+                    sqlite_cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("logActivity() - failed inserting SQLite activity record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+        }
+
+
+
+        //validate database integrity
+        // delete any slice_grain record that does not have a valid sliceid
+        // delete any slice_grain record that does not have a valid grainid
+        public void cleanupDatabase()
+        {
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_cmd.CommandText = "DELETE from slice_grain where slice_grain.id in (select slice_grain.id from slice_grain LEFT JOIN slice on slice_grain.sliceid=slice.sliceid where slice.sliceid is null);";
+                    sqlite_cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("cleanupDatabase() - failed deleting orphan slice_grain records (joining slice): " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_cmd.CommandText = "DELETE from slice_grain where slice_grain.id in (select slice_grain.id from slice_grain LEFT JOIN grain on slice_grain.grainid = grain.grainid where grain.id is null);";
+                    sqlite_cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("cleanupDatabase() - failed deleting orphan slice_grain records (joining grain): " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+
+        }
+
+
 
     }
 }
