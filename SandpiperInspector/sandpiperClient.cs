@@ -1291,6 +1291,62 @@ namespace SandpiperInspector
             return grainslist;
         }
 
+
+
+
+
+
+        public grain getLocalGrain(string grainid, bool with_payload)
+        {
+            grain g = new grain();
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    if (with_payload)
+                    {
+                        sqlite_cmd.CommandText = "SELECT grainid, source, payload_len, grain_key, description, encoding, payload FROM grain where grainid='" + grainid + "'";
+                    }
+                    else
+                    {// leave out payload
+                        sqlite_cmd.CommandText = "SELECT grainid, source, payload_len, grain_key, description, encoding FROM grain where grainid='" + grainid + "'";
+                    }
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+
+                        while (sqlite_datareader.Read())
+                        {
+                            g.id = sqlite_datareader.GetString(0);
+                            g.slice_id = "";
+                            g.source = sqlite_datareader.GetString(1);
+                            g.localfilename = sqlite_datareader.GetString(1);
+                            g.payload_len = sqlite_datareader.GetInt32(2);
+                            g.grain_key = sqlite_datareader.GetString(3);
+                            g.description = sqlite_datareader.GetString(4);
+                            g.encoding = sqlite_datareader.GetString(5);
+                            g.payload = "";
+                            if (with_payload)
+                            {
+                                g.payload = sqlite_datareader.GetString(6);
+                            }
+                        }
+                    }
+                }
+            }
+            return g;
+        }
+
+
+
+
+
+
+
+
+
+
+
         public int countGrainsInLocalSlice(string sliceid)
         {
             int returnVal = 0;

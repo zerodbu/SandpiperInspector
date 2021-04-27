@@ -745,6 +745,8 @@ namespace SandpiperInspector
             buttonDeleteLocalSlice.Left = tabControl1.Width - 250;
             buttonDeleteLocalSlice.Top = treeViewRemoteContent.Bottom + 8;
 
+            buttonExportSlice.Left = tabControl1.Width - 325;
+            buttonExportSlice.Top = treeViewRemoteContent.Bottom + 8;
 
             buttonNewLocalSlice.Left = tabControl1.Width - 170;
             buttonNewLocalSlice.Top = treeViewRemoteContent.Bottom + 8;
@@ -1033,6 +1035,7 @@ namespace SandpiperInspector
             buttonValidatePlan.Enabled = false;
             buttonNewLocalSlice.Enabled = false;
             buttonNewRemoteSlice.Enabled = false;
+            buttonExportSlice.Enabled = false;
         }
 
         private void unlockUIelemets()
@@ -1041,11 +1044,13 @@ namespace SandpiperInspector
             buttonValidatePlan.Enabled = true;
             buttonNewLocalSlice.Enabled = true;
             buttonNewRemoteSlice.Enabled = true;
+            buttonExportSlice.Enabled = true;
         }
 
         private void treeViewLocalContent_AfterSelect(object sender, TreeViewEventArgs e)
         {
             buttonEditLocalSlice.Enabled = false;
+            buttonExportSlice.Enabled = false;
 
             if (e.Node.Name.Contains("slice_"))
             {
@@ -1076,32 +1081,10 @@ namespace SandpiperInspector
                 string[] chunks = e.Node.Name.Split('_');
                 if (sandpiper.looksLikeAUUID(chunks[1]))
                 {
-                    sandpiper.selectedGrain.id = chunks[1];
-
-                    /*
-                    foreach (sandpiperClient.grain g in sandpiper.localGrainsCache)
-                    {
-                        if (g.slice_id == sandpiper.selectedGrain.id)
-                        {
-                            sandpiper.selectedGrain.description = g.description;
-                            sandpiper.selectedGrain.encoding = g.encoding;
-                            sandpiper.selectedGrain.grain_key = g.grain_key;
-                            sandpiper.selectedGrain.payload_len = g.payload_len;
-                            sandpiper.selectedGrain.source = g.source;
-                            sandpiper.selectedGrain.slice_id = g.slice_id;
-                            break;
-                        }
-                    }
-                    */
+                    buttonExportSlice.Enabled = true;
+                    sandpiper.selectedGrain = sandpiper.getLocalGrain(chunks[1],true);
                 }
             }
-
-
-
-
-
-
-
 
         }
 
@@ -1149,6 +1132,7 @@ namespace SandpiperInspector
             if (result == DialogResult.Yes)
             {
                 sandpiper.dropLocalSlice(sandpiper.selectedSlice.slice_id);
+                sandpiper.logActivity("", sandpiper.selectedSlice.slice_id, "", "Slice deleted by local local UI");
                 updateLocalContentTree();
             }
         }
@@ -1205,7 +1189,10 @@ namespace SandpiperInspector
         {
         }
 
-
+        private void buttonExportSlice_Click(object sender, EventArgs e)
+        {
+            sandpiper.writeFilegrainToFile(sandpiper.selectedGrain, lblLocalCacheDir.Text);
+        }
     }
 
 }

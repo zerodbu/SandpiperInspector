@@ -70,6 +70,7 @@
             this.textBoxNodeID = new System.Windows.Forms.TextBox();
             this.timerLocalFilesIndexer = new System.Windows.Forms.Timer(this.components);
             this.timerTransscriptRefresh = new System.Windows.Forms.Timer(this.components);
+            this.buttonExportSlice = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
             this.tabPageHistory.SuspendLayout();
@@ -267,6 +268,7 @@
             // 
             // tabPageLocalConntent
             // 
+            this.tabPageLocalConntent.Controls.Add(this.buttonExportSlice);
             this.tabPageLocalConntent.Controls.Add(this.buttonDeleteLocalSlice);
             this.tabPageLocalConntent.Controls.Add(this.buttonEditLocalSlice);
             this.tabPageLocalConntent.Controls.Add(this.buttonNewLocalSlice);
@@ -486,6 +488,16 @@
             this.timerTransscriptRefresh.Interval = 300;
             this.timerTransscriptRefresh.Tick += new System.EventHandler(this.timerTransscriptRefresh_Tick);
             // 
+            // buttonExportSlice
+            // 
+            this.buttonExportSlice.Location = new System.Drawing.Point(74, 168);
+            this.buttonExportSlice.Name = "buttonExportSlice";
+            this.buttonExportSlice.Size = new System.Drawing.Size(95, 30);
+            this.buttonExportSlice.TabIndex = 4;
+            this.buttonExportSlice.Text = "Export";
+            this.buttonExportSlice.UseVisualStyleBackColor = true;
+            this.buttonExportSlice.Click += new System.EventHandler(this.buttonExportSlice_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -572,6 +584,7 @@
         private System.Windows.Forms.Timer timerLocalFilesIndexer;
         private System.Windows.Forms.Timer timerTransscriptRefresh;
         private System.Windows.Forms.CheckBox checkBoxTranscript;
+        private System.Windows.Forms.Button buttonExportSlice;
     }
 }
 
