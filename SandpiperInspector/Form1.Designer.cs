@@ -71,6 +71,7 @@
             this.timerLocalFilesIndexer = new System.Windows.Forms.Timer(this.components);
             this.timerTransscriptRefresh = new System.Windows.Forms.Timer(this.components);
             this.buttonExportSlice = new System.Windows.Forms.Button();
+            this.textBoxSelectedGrain = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
             this.tabPageHistory.SuspendLayout();
@@ -268,6 +269,7 @@
             // 
             // tabPageLocalConntent
             // 
+            this.tabPageLocalConntent.Controls.Add(this.textBoxSelectedGrain);
             this.tabPageLocalConntent.Controls.Add(this.buttonExportSlice);
             this.tabPageLocalConntent.Controls.Add(this.buttonDeleteLocalSlice);
             this.tabPageLocalConntent.Controls.Add(this.buttonEditLocalSlice);
@@ -316,7 +318,7 @@
             // 
             this.treeViewLocalContent.Location = new System.Drawing.Point(3, 3);
             this.treeViewLocalContent.Name = "treeViewLocalContent";
-            this.treeViewLocalContent.Size = new System.Drawing.Size(520, 159);
+            this.treeViewLocalContent.Size = new System.Drawing.Size(311, 159);
             this.treeViewLocalContent.TabIndex = 0;
             this.treeViewLocalContent.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeViewLocalContent_AfterSelect);
             this.treeViewLocalContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.treeViewLocalContent_KeyUp);
@@ -498,6 +500,14 @@
             this.buttonExportSlice.UseVisualStyleBackColor = true;
             this.buttonExportSlice.Click += new System.EventHandler(this.buttonExportSlice_Click);
             // 
+            // textBoxSelectedGrain
+            // 
+            this.textBoxSelectedGrain.Location = new System.Drawing.Point(320, 3);
+            this.textBoxSelectedGrain.Multiline = true;
+            this.textBoxSelectedGrain.Name = "textBoxSelectedGrain";
+            this.textBoxSelectedGrain.Size = new System.Drawing.Size(203, 159);
+            this.textBoxSelectedGrain.TabIndex = 5;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -530,6 +540,7 @@
             this.tabPageHistory.ResumeLayout(false);
             this.tabPageHistory.PerformLayout();
             this.tabPageLocalConntent.ResumeLayout(false);
+            this.tabPageLocalConntent.PerformLayout();
             this.tabPageTranscript.ResumeLayout(false);
             this.tabPageTranscript.PerformLayout();
             this.tabPageRemoteContent.ResumeLayout(false);
@@ -585,6 +596,7 @@
         private System.Windows.Forms.Timer timerTransscriptRefresh;
         private System.Windows.Forms.CheckBox checkBoxTranscript;
         private System.Windows.Forms.Button buttonExportSlice;
+        private System.Windows.Forms.TextBox textBoxSelectedGrain;
     }
 }
 

@@ -733,8 +733,13 @@ namespace SandpiperInspector
 
 
 
-            treeViewLocalContent.Width = tabControl1.Width - 18;
+            treeViewLocalContent.Width = Convert.ToInt32(tabControl1.Width * .5);
             treeViewLocalContent.Height = tabControl1.Height - 65;
+
+            textBoxSelectedGrain.Left = treeViewLocalContent.Right + 4;
+            textBoxSelectedGrain.Width = tabControl1.Width - treeViewLocalContent.Width - 18;
+            textBoxSelectedGrain.Height = treeViewLocalContent.Height;
+
 
             treeViewRemoteContent.Width = tabControl1.Width - 18;
             treeViewRemoteContent.Height = tabControl1.Height - 65;
@@ -1051,6 +1056,7 @@ namespace SandpiperInspector
         {
             buttonEditLocalSlice.Enabled = false;
             buttonExportSlice.Enabled = false;
+            textBoxSelectedGrain.Text = "";
 
             if (e.Node.Name.Contains("slice_"))
             {
@@ -1083,6 +1089,14 @@ namespace SandpiperInspector
                 {
                     buttonExportSlice.Enabled = true;
                     sandpiper.selectedGrain = sandpiper.getLocalGrain(chunks[1],true);
+                    if (sandpiper.selectedGrain.payload_len < 10000)
+                    {
+                        textBoxSelectedGrain.Text = sandpiper.selectedGrain.payload;
+                    }
+                    else
+                    {
+                        textBoxSelectedGrain.Text = "grain paylod is too large to display";
+                    }
                 }
             }
 
