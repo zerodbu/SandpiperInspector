@@ -1151,48 +1151,6 @@ namespace SandpiperInspector
                 sandpiper.dropLocalSlice(sandpiper.selectedSlice.slice_id);
                 updateLocalContentTree();
             }
-
-
-            /*
-
-            // see if any grains claim this slice
-
-            int grainCount = 0;
-            foreach (sandpiperClient.grain g in sandpiper.localGrainsCache)
-            {
-                if (sandpiper.selectedSlice.slice_id == g.slice_id) { grainCount++; }            
-            }
-
-            if(grainCount == 0)
-            {
-                string message = "You are about to delete empty slice (named: "+sandpiper.selectedSlice.name+") from the local pool. No grains will be deleted. Are you sure?";
-                MessageBoxButtons buttons = MessageBoxButtons.YesNo;
-                DialogResult result = MessageBox.Show(message, "Delete Empty Slice", buttons);
-                if (result == DialogResult.Yes)
-                {
-                    for (int i = 0; i <= sandpiper.localSlices.Count() - 1; i++)
-                    {
-                        if (sandpiper.localSlices[i].slice_id == sandpiper.selectedSlice.slice_id)
-                        {
-                            sandpiper.localSlices.RemoveAt(i);
-                            break;
-                        }                   
-                    }
-
-                    sandpiper.writeFullCacheIndex(lblLocalCacheDir.Text);
-                    updateLocalContentTree();
-                }
-            }
-            else
-            {
-                string message = "Slices must be empty (no grains) before you delete them. Manually delete the "+grainCount.ToString()+" grainfiles in this slice from the cache directory.";
-                MessageBoxButtons buttons = MessageBoxButtons.OK;
-                DialogResult result = MessageBox.Show(message, "Delete Slice", buttons);
-            }
-
-        */
-
-
         }
 
 

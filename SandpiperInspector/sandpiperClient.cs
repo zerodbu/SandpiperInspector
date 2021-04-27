@@ -1447,21 +1447,22 @@ namespace SandpiperInspector
                         }
                     }
                 }
+
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    try
+                    {
+                        sqlite_cmd.CommandText = "UPDATE slice set localhash='" + md5(string.Join("", grainids)) + "' where sliceid='" + sliceid + "';";
+                        sqlite_cmd.ExecuteNonQuery();
+                        returnVal = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        historyRecords.Add("refreshLocalSliceHash(" + sliceid + ") - failed updating slice record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                    }
+                }
             }
 
-            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
-            {
-                try
-                {
-                    sqlite_cmd.CommandText = "UPDATE slice set localhash='" + md5(string.Join("", grainids)) + "' where sliceid='" + sliceid + "';";
-                    sqlite_cmd.ExecuteNonQuery();
-                    returnVal = true;
-                }
-                catch (Exception ex)
-                {
-                    historyRecords.Add("refreshLocalSliceHash("+sliceid+") - failed updating slice record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
-                }
-            }
             return returnVal;
         }
 
@@ -1514,6 +1515,21 @@ namespace SandpiperInspector
                     historyRecords.Add("cleanupDatabase() - failed deleting orphan slice_grain records (joining grain): " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
                 }
             }
+
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_cmd.CommandText = "DELETE from grain where grain.grainid in (select grain.grainid from grain LEFT JOIN slice_grain on grain.grainid = slice_grain.grainid where slice_grain.id is null);";
+                    sqlite_cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("cleanupDatabase() - failed deleting orphan grains: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                }
+            }
+
+
 
         }
 
