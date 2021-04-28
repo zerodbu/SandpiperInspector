@@ -478,25 +478,7 @@ namespace SandpiperInspector
                          // maybe update the local hash for the slice? 
                             sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                             sandpiper.historyRecords.Add("all grain sets are in sync even though hash comparison implied otherwise - ?? should be overwriting hashes on local slice cache with the ones we just got from the primary?");
-                            lblStatus.Text = "";
-
-
-                            //overwrite local hashes in the local sliceist cache
-                            /*
-                            foreach (sandpiperClient.slice s in sandpiper.remoteSlices)
-                            {
-                                for (int i = 0; i <= sandpiper.localSlices.Count() - 1; i++)
-                                {
-                                    if(s.slice_id == sandpiper.localSlices[i].slice_id)
-                                    {
-                                        sandpiper.localSlices[i].hash = s.hash;
-                                    }
-                                }                            
-                            }
-                            sandpiper.writeFullCacheIndex(lblLocalCacheDir.Text);
-                            */
-                            
-
+                            lblStatus.Text = "";                           
                         }
                     }
                     else
@@ -536,10 +518,7 @@ namespace SandpiperInspector
 
                         sandpiper.addLocalGrain(grains[0]);
                         sandpiper.logActivity(grains[0].id, grains[0].slice_id, "",  "grain (" + grains[0].description + ") added to local pool");
-
-
-                        //sandpiper.writeFilegrainToFile(grains[0], lblLocalCacheDir.Text);
-                        
+                       
                         sandpiper.grainsToTransfer.RemoveAt(0); // remove the gotten grain from the hitlist
                         if (sandpiper.grainsToTransfer.Count() > 0)
                         {// more grains to download

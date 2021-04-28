@@ -586,6 +586,7 @@ namespace SandpiperInspector
                 {
                     addLocalSlice(s);
                     historyRecords.Add("Added slice " + s.slice_id + " (" + s.name + ") to local pool");
+                    logActivity("", s.slice_id, "", "slice (" + s.name + ") added to local pool");
                 }
             }
         }
@@ -596,7 +597,6 @@ namespace SandpiperInspector
             // this is for syncing the local as secondary
             int returnVal = 0;
 
-            List<string> sliceidsToDrop = new List<string>();
             List<string> remoteSliceids = new List<string>();
             foreach (slice s in remoteSlices){remoteSliceids.Add(s.slice_id);}
 
@@ -607,6 +607,7 @@ namespace SandpiperInspector
                 {
                     historyRecords.Add("Removing local slice " + s.slice_id + " (" + s.name + ") and all of its grain connections from local pool");
                     dropLocalSlice(s.slice_id);
+                    logActivity("", s.slice_id, "", "slice (" + s.name + ") removed from local pool");
                 }
             }
 
@@ -637,6 +638,8 @@ namespace SandpiperInspector
             {// probably a text file 
                 File.WriteAllBytes(cacheDir + @"\" + filegrain.localfilename, Encoding.UTF8.GetBytes(filegrain.payload));
             }
+
+            logActivity(filegrain.id, filegrain.slice_id, "", "grain (" + filegrain.description + ") exported to local file ("+ filegrain.localfilename + ")");
 
             return true;
         }
