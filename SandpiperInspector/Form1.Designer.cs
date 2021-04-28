@@ -48,6 +48,8 @@
             this.tabPageHistory = new System.Windows.Forms.TabPage();
             this.textBoxHistory = new System.Windows.Forms.TextBox();
             this.tabPageLocalConntent = new System.Windows.Forms.TabPage();
+            this.textBoxSelectedGrain = new System.Windows.Forms.TextBox();
+            this.buttonExportSlice = new System.Windows.Forms.Button();
             this.buttonDeleteLocalSlice = new System.Windows.Forms.Button();
             this.buttonEditLocalSlice = new System.Windows.Forms.Button();
             this.buttonNewLocalSlice = new System.Windows.Forms.Button();
@@ -70,8 +72,6 @@
             this.textBoxNodeID = new System.Windows.Forms.TextBox();
             this.timerLocalFilesIndexer = new System.Windows.Forms.Timer(this.components);
             this.timerTransscriptRefresh = new System.Windows.Forms.Timer(this.components);
-            this.buttonExportSlice = new System.Windows.Forms.Button();
-            this.textBoxSelectedGrain = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
             this.tabPageHistory.SuspendLayout();
@@ -282,6 +282,25 @@
             this.tabPageLocalConntent.Text = "Local Content";
             this.tabPageLocalConntent.UseVisualStyleBackColor = true;
             // 
+            // textBoxSelectedGrain
+            // 
+            this.textBoxSelectedGrain.Location = new System.Drawing.Point(320, 3);
+            this.textBoxSelectedGrain.Multiline = true;
+            this.textBoxSelectedGrain.Name = "textBoxSelectedGrain";
+            this.textBoxSelectedGrain.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textBoxSelectedGrain.Size = new System.Drawing.Size(203, 159);
+            this.textBoxSelectedGrain.TabIndex = 5;
+            // 
+            // buttonExportSlice
+            // 
+            this.buttonExportSlice.Location = new System.Drawing.Point(74, 168);
+            this.buttonExportSlice.Name = "buttonExportSlice";
+            this.buttonExportSlice.Size = new System.Drawing.Size(95, 30);
+            this.buttonExportSlice.TabIndex = 4;
+            this.buttonExportSlice.Text = "Export";
+            this.buttonExportSlice.UseVisualStyleBackColor = true;
+            this.buttonExportSlice.Click += new System.EventHandler(this.buttonExportSlice_Click);
+            // 
             // buttonDeleteLocalSlice
             // 
             this.buttonDeleteLocalSlice.Enabled = false;
@@ -489,24 +508,6 @@
             this.timerTransscriptRefresh.Enabled = true;
             this.timerTransscriptRefresh.Interval = 300;
             this.timerTransscriptRefresh.Tick += new System.EventHandler(this.timerTransscriptRefresh_Tick);
-            // 
-            // buttonExportSlice
-            // 
-            this.buttonExportSlice.Location = new System.Drawing.Point(74, 168);
-            this.buttonExportSlice.Name = "buttonExportSlice";
-            this.buttonExportSlice.Size = new System.Drawing.Size(95, 30);
-            this.buttonExportSlice.TabIndex = 4;
-            this.buttonExportSlice.Text = "Export";
-            this.buttonExportSlice.UseVisualStyleBackColor = true;
-            this.buttonExportSlice.Click += new System.EventHandler(this.buttonExportSlice_Click);
-            // 
-            // textBoxSelectedGrain
-            // 
-            this.textBoxSelectedGrain.Location = new System.Drawing.Point(320, 3);
-            this.textBoxSelectedGrain.Multiline = true;
-            this.textBoxSelectedGrain.Name = "textBoxSelectedGrain";
-            this.textBoxSelectedGrain.Size = new System.Drawing.Size(203, 159);
-            this.textBoxSelectedGrain.TabIndex = 5;
             // 
             // Form1
             // 

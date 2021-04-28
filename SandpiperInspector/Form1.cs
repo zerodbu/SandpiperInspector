@@ -392,12 +392,12 @@ namespace SandpiperInspector
                             sandpiper.dropLocalSlice(s.slice_id);
                         }
                         localContentTreeIsUpToDate = false;
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
+                   //     sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                     }
                     else
                     {
                         sandpiper.historyRecords.Add("        All slices in local secondary pool are valid (exist in remote primary pool) - nothing to delete");
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
+                     //   sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                     }
 
 
@@ -1089,13 +1089,13 @@ namespace SandpiperInspector
                 {
                     buttonExportSlice.Enabled = true;
                     sandpiper.selectedGrain = sandpiper.getLocalGrain(chunks[1],true);
-                    if (sandpiper.selectedGrain.payload_len < 10000)
+                    if (sandpiper.selectedGrain.payload_len < 50000)
                     {
                         textBoxSelectedGrain.Text = sandpiper.selectedGrain.payload;
                     }
                     else
                     {
-                        textBoxSelectedGrain.Text = "grain paylod is too large to display";
+                        textBoxSelectedGrain.Text = "grain paylod is too large to display. Use the Export button to write it to a local file in the cache directory.";
                     }
                 }
             }
