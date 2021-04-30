@@ -1,5 +1,5 @@
 -- Convenience for development
---- Linking tables ---
+--- Linking tables --- 
 DROP TABLE IF EXISTS node_multi_link_entries;
 DROP TABLE IF EXISTS node_multi_links;
 DROP TABLE IF EXISTS node_unique_links;
