@@ -712,7 +712,7 @@ namespace SandpiperInspector
 
 
 
-            treeViewLocalContent.Width = Convert.ToInt32(tabControl1.Width * .5);
+            treeViewLocalContent.Width = Convert.ToInt32(tabControl1.Width * .3);
             treeViewLocalContent.Height = tabControl1.Height - 65;
 
             textBoxSelectedGrain.Left = treeViewLocalContent.Right + 4;
