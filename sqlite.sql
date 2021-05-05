@@ -54,7 +54,7 @@ CREATE TABLE controllers (
 		, controllerDescription TEXT 
 		, adminContact TEXT NOT NULL
 		, adminEmail TEXT NOT NULL
-		, createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		, createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP  -- llklklklk 
 	);
 
 CREATE TABLE instances (
@@ -157,6 +157,18 @@ CREATE TABLE subscriptions (
 		, createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		, UNIQUE (planSliceID, subscriptionOrder)
 	);
+
+
+CREATE TABLE activity (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	description varchar(255),
+	planid VARCHAR(36),
+	sliceid VARCHAR(36),
+	grainid VARCHAR(36),
+	timestamp DATETIME
+	);
+
+
 
 --- Linking tables
 CREATE TABLE node_unique_links (

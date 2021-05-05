@@ -3,32 +3,25 @@
 DROP TABLE IF EXISTS node_multi_link_entries;
 DROP TABLE IF EXISTS node_multi_links;
 DROP TABLE IF EXISTS node_unique_links;
-
 DROP TABLE IF EXISTS pool_multi_link_entries;
 DROP TABLE IF EXISTS pool_multi_links;
 DROP TABLE IF EXISTS pool_unique_links;
-
 DROP TABLE IF EXISTS slice_multi_link_entries;
 DROP TABLE IF EXISTS slice_multi_links;
 DROP TABLE IF EXISTS slice_unique_links;
-
 -- Core tables
 DROP TABLE IF EXISTS grain_payloads;
 DROP TABLE IF EXISTS slice_grains;
-
 DROP TABLE IF EXISTS grains;
-
 DROP TABLE IF EXISTS subscriptions;
 DROP TABLE IF EXISTS plan_slices;
 DROP TABLE IF EXISTS plans;
-
 DROP TABLE IF EXISTS slices;
 DROP TABLE IF EXISTS pools;
 DROP TABLE IF EXISTS nodes;
 DROP TABLE IF EXISTS instance_responders;
 DROP TABLE IF EXISTS instances;
 DROP TABLE IF EXISTS controllers;
-
 --- Basic key values
 DROP TABLE IF EXISTS slice_types;
 DROP TABLE IF EXISTS unique_key_fields;
@@ -80,7 +73,7 @@ CREATE TABLE nodes (
 		, controllerUUID CHAR(36) NOT NULL REFERENCES controllers (controllerUUID)
 		, instanceUUID CHAR(36) NOT NULL REFERENCES instances (instanceUUID)
 		, nodeDescription TEXT NOT NULL
-		-- Allow one node to be flagged as this node, and only one
+-- Allow one node to be flagged as this node, and only one
 		, selfNode TEXT NULL UNIQUE CHECK (selfNode IS NULL OR selfNode = 'yes')
 		, createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		, UNIQUE (controllerUUID, instanceUUID)
@@ -128,7 +121,7 @@ CREATE TABLE slice_grains (
 		, grainUUID CHAR(36) NOT NULL REFERENCES grains (grainUUID)
 		, grainOrder INTEGER NOT NULL DEFAULT 0
 		, UNIQUE (sliceUUID, grainUUID)
-		, UNIQUE (sliceUUID, grainOrder)
+--		, UNIQUE (sliceUUID, grainOrder)
 	);
 
 --- Plans
@@ -156,6 +149,15 @@ CREATE TABLE subscriptions (
 		, subscriptionOrder INTEGER NOT NULL DEFAULT 0
 		, createdOn DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 		, UNIQUE (planSliceID, subscriptionOrder)
+	);
+
+CREATE TABLE activity (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	description varchar(255),
+	planid VARCHAR(36),
+	sliceid VARCHAR(36),
+	grainid VARCHAR(36),
+	timestamp DATETIME
 	);
 
 --- Linking tables

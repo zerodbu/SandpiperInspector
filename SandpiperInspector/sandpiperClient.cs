@@ -50,6 +50,7 @@ namespace SandpiperInspector
         public int historyRecordCountTemp;
         public string plandocumentSchema;   // the active one
         public string defaultPlandocumentSchema; // for use if the user "resets to default"
+        public Dictionary<string, string> localSliceHashes = new Dictionary<string, string>();
         public List<slice> slicesToUpdate = new List<slice>();
         public List<slice> slicesToAdd = new List<slice>();
         public List<slice> slicesToDrop = new List<slice>();
@@ -101,44 +102,48 @@ namespace SandpiperInspector
 
         public class grain
         {
-            public string id;
+            public string grainUUID;
+            public string grainKey;
+            public string grainReference;
+            public string sliceUUID;
             public string description;
-            public string slice_id;
-            public string grain_key;
             public string source;
             public string encoding;
             public string payload;
-            public long payload_len;
+            public long payloadLen;
             public string localfilename;
 
             public void clear()
             {
-                id = "";
+                grainUUID = "";
                 description = "";
-                slice_id = "";
-                grain_key = "";
+                sliceUUID = "";
+                grainKey = "";
                 source = "";
                 encoding = "";
-                payload_len = 0;
+                payloadLen = 0;
             }
         }
 
 
         public class slice
         {
-            public string slice_id;
-            public string slice_type;
-            public string name;
-            public string slicemetadata;
-            public string hash; // md5sum of grain uuid concatenated
+            public string sliceUUID;
+            public string poolUUID;
+            public string sliceDescription;
+            public string sliceType;
+            public string fileName;
+            public string sliceMetadata;
+            public Int32 sliceOrder;
+            public string grainUUIDsHash; // md5sum of grain UUIDs concatenated
             public List<grain> grains;
 
             public void clear()
             {
-                slice_id = "";
-                slice_type = "";
-                name = "";
-                slicemetadata = "";
+                sliceUUID = "";
+                sliceType = "";
+                fileName = "";
+                sliceMetadata = "";
                 if (grains != null) { grains.Clear(); }
             }
         }
@@ -166,6 +171,45 @@ namespace SandpiperInspector
         {
             public string message;
         }
+
+
+        //---  temporary naming bridge ------------
+        public class altSlice
+        {
+            public string slice_id;
+            public string slice_type;
+            public string name;
+            public string slicemetadata;
+            public string hash;
+        }
+
+        public class altGrain
+        {
+            public string id;
+            public string description;
+            public string slice_id;
+            public string grain_key;
+            public string source;
+            public string encoding;
+            public string payload;
+            public Int32 payload_len;
+        }
+
+        public class altGrainsEnvelope
+        {
+            public List<altGrain> grains;
+        }
+
+        public class altGrainsEnvelopeCompact
+        {
+            public List<string> grainuuids;
+        }
+
+
+
+
+
+        //--------------------------------------------
 
         public async Task<bool> loginAsync(string path, string username, string password, string plandocument)
         {
@@ -255,12 +299,18 @@ namespace SandpiperInspector
 
         public async Task<List<grain>> getGrainsAsync(string path, JWT jwt)
         {
-            List<grain> grainsList = new List<grain>();
-            grainsEnvelope responseData = new grainsEnvelope();
-            grainsEnvelopeCompact responseDataCompact = new grainsEnvelopeCompact();
-            grain myGrain = new grain();
 
+            List<altGrain> altGrainsList = new List<altGrain>();
+            grainsEnvelope responseData = new grainsEnvelope();
+
+            altGrainsEnvelope altResponseData = new altGrainsEnvelope();
+            altGrain myAltGrain = new altGrain();
+
+            altResponseData.grains = altGrainsList;
+
+            List<grain> grainsList = new List<grain>();
             responseData.grains = grainsList;
+
 
             try
             {
@@ -289,12 +339,12 @@ namespace SandpiperInspector
                     {
                         if (responseString.Substring(0, 13).Contains("\"grains\""))
                         {// json scructure includes a wrapper evelope 
-                            responseData = serializer.Deserialize<grainsEnvelope>(responseString);
+                            altResponseData = serializer.Deserialize<altGrainsEnvelope>(responseString);
                         }
                         else
                         {
-                            myGrain = serializer.Deserialize<grain>(responseString);
-                            responseData.grains.Add(myGrain);
+                            myAltGrain = serializer.Deserialize<altGrain>(responseString);
+                            altResponseData.grains.Add(myAltGrain);
                         }
                     }
                     catch (Exception ex)
@@ -312,9 +362,21 @@ namespace SandpiperInspector
                 historyRecords.Add("Grains error - " + ex.Message);
             }
 
-            for (int i = 0; i <= responseData.grains.Count() - 1; i++)
-            {// prefix the soure with the grainid to make it unique for local file storage
-                responseData.grains[i].localfilename = responseData.grains[i].id + " - " + responseData.grains[i].source;
+
+            foreach (altGrain ag in altResponseData.grains)
+            {
+                grain g = new grain();
+                g.description = ag.description;
+                g.encoding = ag.encoding;
+                g.grainKey = ag.grain_key;
+                g.localfilename = "";
+                g.payload = ag.payload;
+                g.payloadLen = ag.payload_len;
+                g.sliceUUID = ag.slice_id;
+                g.source = ag.source;
+                g.grainReference = ag.source;
+                g.grainUUID = ag.id;
+                responseData.grains.Add(g);
             }
 
 
@@ -334,8 +396,8 @@ namespace SandpiperInspector
             string bodyJSON = bodySerializer.Serialize(new
             {
 
-                id = g.id,
-                slice_id = g.slice_id,
+                grainUUID = g.grainUUID,
+                sliceUUID = g.sliceUUID,
                 name = g.description,
                 source = g.source,
                 grain_key = "level-1",
@@ -367,22 +429,22 @@ namespace SandpiperInspector
                     try
                     {
                         serverGrainsResponse = serializer.Deserialize<grainsResponse>(responseString);
-                        historyRecords.Add("POST grain " + g.id + ".  Server responded: " + serverGrainsResponse.message);
+                        historyRecords.Add("POST grain " + g.grainUUID + ".  Server responded: " + serverGrainsResponse.message);
                     }
                     catch (Exception ex)
                     {
-                        historyRecords.Add("POST grain " + g.id + ". Local error parsing server JSON response from server: " + ex.Message);
+                        historyRecords.Add("POST grain " + g.grainUUID + ". Local error parsing server JSON response from server: " + ex.Message);
                     }
                 }
                 else
                 {// something other than 200 (success) code back from the other end 
-                    historyRecords.Add("POST grain " + g.id + " error. Server HTTP response:" + response.ReasonPhrase);
+                    historyRecords.Add("POST grain " + g.grainUUID + " error. Server HTTP response:" + response.ReasonPhrase);
                 }
 
             }
             catch (Exception ex)
             {
-                historyRecords.Add("POST grain " + g.id + ". Local error - " + ex.Message);
+                historyRecords.Add("POST grain " + g.grainUUID + ". Local error - " + ex.Message);
             }
 
             return returnValue;
@@ -428,7 +490,9 @@ namespace SandpiperInspector
 
         public async Task<List<slice>> getSlicesAsync(string path, JWT jwt)
         {
+            List<altSlice> altSlices = new List<altSlice>();
             List<slice> slices = new List<slice>();
+
             try
             {
 
@@ -447,7 +511,7 @@ namespace SandpiperInspector
                     string responseString = await response.Content.ReadAsStringAsync();
                     if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
-                    slices = serializer.Deserialize<List<slice>>(responseString);
+                    altSlices = serializer.Deserialize<List<altSlice>>(responseString);
 
                 }
                 else
@@ -459,6 +523,22 @@ namespace SandpiperInspector
             {
                 historyRecords.Add("Slices error - " + ex.Message);
             }
+
+            //--- temporary hack to account for the naming difference between old and new slice naming convention-------
+
+            foreach (altSlice alts in altSlices)
+            {
+                slice s = new slice();
+                s.sliceUUID = alts.slice_id;
+                s.sliceDescription = alts.name;
+                s.sliceType = alts.slice_type;
+                s.sliceMetadata = alts.slicemetadata;
+                s.grainUUIDsHash = alts.hash;
+                slices.Add(s);            
+            }
+            //----------------------------
+
+
             return slices;
         }
 
@@ -523,10 +603,10 @@ namespace SandpiperInspector
             bodySerializer.MaxJsonLength = Int32.MaxValue;
             string bodyJSON = bodySerializer.Serialize(new
             {
-                id = s.slice_id,
-                name = s.name,
-                slice_type = s.slice_type,
-                metadata = s.slicemetadata
+                sliceUUID = s.sliceUUID,
+                description = s.sliceDescription,
+                sliceType = s.sliceType,
+                metadata = s.sliceMetadata
             });
 
             if (recordTranscript) { transcriptRecords.Add(FormatJson(bodyJSON)); }
@@ -554,22 +634,22 @@ namespace SandpiperInspector
                     try
                     {
                         serverSlicesResponse = serializer.Deserialize<slicesResponse>(responseString);
-                        historyRecords.Add("POST slice " + s.slice_id + ".  Server responded: " + serverSlicesResponse.message);
+                        historyRecords.Add("POST slice " + s.sliceUUID + ".  Server responded: " + serverSlicesResponse.message);
                     }
                     catch (Exception ex)
                     {
-                        historyRecords.Add("POST slice " + s.slice_id + ". Local error parsing server JSON response from server: " + ex.Message);
+                        historyRecords.Add("POST slice " + s.sliceUUID + ". Local error parsing server JSON response from server: " + ex.Message);
                     }
                 }
                 else
                 {// something other than 200 (success) code back from the other end 
-                    historyRecords.Add("POST slice " + s.slice_id + " error. Server HTTP response:" + response.ReasonPhrase);
+                    historyRecords.Add("POST slice " + s.sliceUUID + " error. Server HTTP response:" + response.ReasonPhrase);
                 }
 
             }
             catch (Exception ex)
             {
-                historyRecords.Add("POST slice " + s.slice_id + ". Local error - " + ex.Message);
+                historyRecords.Add("POST slice " + s.sliceUUID + ". Local error - " + ex.Message);
             }
 
             return returnValue;
@@ -582,11 +662,11 @@ namespace SandpiperInspector
             // add slices to the local list from given list if they do not already exist
             foreach (slice s in slices)
             {
-                if(!localSliceExists(s.slice_id))
+                if(!localSliceExists(s.sliceUUID))
                 {
                     addLocalSlice(s);
-                    historyRecords.Add("Added slice " + s.slice_id + " (" + s.name + ") to local pool");
-                    logActivity("", s.slice_id, "", "slice (" + s.name + ") added to local pool");
+                    historyRecords.Add("Added slice " + s.sliceUUID + " (" + s.sliceDescription + ") to local pool");
+                    logActivity("", s.sliceUUID, "", "slice (" + s.sliceDescription + ") added to local pool");
                 }
             }
         }
@@ -598,16 +678,16 @@ namespace SandpiperInspector
             int returnVal = 0;
 
             List<string> remoteSliceids = new List<string>();
-            foreach (slice s in remoteSlices){remoteSliceids.Add(s.slice_id);}
+            foreach (slice s in remoteSlices){remoteSliceids.Add(s.sliceUUID);}
 
             List<slice> localSlices = getLocalSlices();
             foreach (slice s in localSlices)
             {
-                if (!remoteSliceids.Contains(s.slice_id))
+                if (!remoteSliceids.Contains(s.sliceUUID))
                 {
-                    historyRecords.Add("Removing local slice " + s.slice_id + " (" + s.name + ") and all of its grain connections from local pool");
-                    dropLocalSlice(s.slice_id);
-                    logActivity("", s.slice_id, "", "slice (" + s.name + ") removed from local pool");
+                    historyRecords.Add("Removing local slice " + s.sliceUUID + " (" + s.sliceDescription + ") and all of its grain connections from local pool");
+                    dropLocalSlice(s.sliceUUID);
+                    logActivity("", s.sliceUUID, "", "slice (" + s.sliceDescription + ") removed from local pool");
                 }
             }
 
@@ -639,7 +719,7 @@ namespace SandpiperInspector
                 File.WriteAllBytes(cacheDir + @"\" + filegrain.localfilename, Encoding.UTF8.GetBytes(filegrain.payload));
             }
 
-            logActivity(filegrain.id, filegrain.slice_id, "", "grain (" + filegrain.description + ") exported to local file ("+ filegrain.localfilename + ")");
+            logActivity(filegrain.grainUUID, filegrain.sliceUUID, "", "grain (" + filegrain.description + ") exported to local file ("+ filegrain.localfilename + ")");
 
             return true;
         }
@@ -656,7 +736,7 @@ namespace SandpiperInspector
                 found = false;
                 foreach (grain gA in grainsA)
                 {
-                    if(grainsB[i].id == gA.id)
+                    if(grainsB[i].grainUUID== gA.grainUUID)
                     {// this grain from the "B" list was found in the "A" list - quit looking
                         found = true;
                         break;
@@ -907,12 +987,12 @@ namespace SandpiperInspector
 
                     foreach (slice remoteSlice in remoteSlices)
                     {
-                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        if (remoteSlice.sliceUUID == localSlice.sliceUUID)
                         {// found a sliceid match
 
                             foundRemoteSlice = true;
 
-                            if (remoteSlice.hash.ToLower() != localSlice.hash.ToLower())
+                            if (remoteSlice.grainUUIDsHash.ToLower() != localSlice.grainUUIDsHash.ToLower())
                             {
                                 hashMatch = false;
                             }
@@ -923,14 +1003,26 @@ namespace SandpiperInspector
                     if (!foundRemoteSlice)
                     {// no remote slice was found. put it on the "add" list  
                         slice newSlice = new slice();
-                        newSlice.slice_id = localSlice.slice_id; newSlice.slice_type = localSlice.slice_type; newSlice.name = localSlice.name; newSlice.slicemetadata = localSlice.slicemetadata; newSlice.hash = localSlice.hash;
+                        newSlice.sliceUUID = localSlice.sliceUUID;
+                        newSlice.poolUUID = localSlice.poolUUID;
+                        newSlice.sliceType = localSlice.sliceType;
+                        newSlice.fileName = localSlice.fileName;
+                        newSlice.sliceDescription = localSlice.sliceDescription; 
+                        newSlice.sliceMetadata = localSlice.sliceMetadata; 
+                        newSlice.grainUUIDsHash = localSlice.grainUUIDsHash;
                         slicesToAdd.Add(newSlice);
                     }
 
                     if (!hashMatch)
                     {// no remote slice was found, or it was found with non-matching hash. We need to push this slice into the remote secondary
                         slice newSlice = new slice();
-                        newSlice.slice_id = localSlice.slice_id; newSlice.slice_type = localSlice.slice_type; newSlice.name = localSlice.name; newSlice.slicemetadata = localSlice.slicemetadata; newSlice.hash = localSlice.hash;
+                        newSlice.sliceUUID = localSlice.sliceUUID;
+                        newSlice.sliceType = localSlice.sliceType;
+                        newSlice.poolUUID = localSlice.poolUUID;
+                        newSlice.fileName = localSlice.fileName;
+                        newSlice.sliceDescription = localSlice.sliceDescription;
+                        newSlice.sliceMetadata = localSlice.sliceMetadata;
+                        newSlice.grainUUIDsHash = localSlice.grainUUIDsHash;
                         slicesToUpdate.Add(newSlice);
                     }
                 }
@@ -942,7 +1034,7 @@ namespace SandpiperInspector
                     foundLocalSlice = false;
                     foreach (slice localSlice in localSlices)
                     {
-                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        if (remoteSlice.sliceUUID == localSlice.sliceUUID)
                         {// found a sliceid match
                             foundLocalSlice = true;
                             break;
@@ -952,7 +1044,13 @@ namespace SandpiperInspector
                     if (!foundLocalSlice)
                     {
                         slice newSlice = new slice();
-                        newSlice.slice_id = remoteSlice.slice_id; newSlice.slice_type = remoteSlice.slice_type; newSlice.name = remoteSlice.name; newSlice.slicemetadata = remoteSlice.slicemetadata; newSlice.hash = remoteSlice.hash;
+                        newSlice.sliceUUID = remoteSlice.sliceUUID;
+                        newSlice.poolUUID = remoteSlice.poolUUID;
+                        newSlice.sliceDescription = remoteSlice.sliceDescription;
+                        newSlice.sliceType = remoteSlice.sliceType;
+                        newSlice.fileName = remoteSlice.fileName;
+                        newSlice.sliceMetadata = remoteSlice.sliceMetadata; 
+                        newSlice.grainUUIDsHash = remoteSlice.grainUUIDsHash;
                         slicesToDrop.Add(newSlice);
                     }
                 }
@@ -968,12 +1066,12 @@ namespace SandpiperInspector
                     foreach (slice localSlice in localSlices)
                     {
 
-                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        if (remoteSlice.sliceUUID == localSlice.sliceUUID)
                         {// found a sliceid match
 
                             foundLocalSlice = true;
 
-                            if (remoteSlice.hash.ToLower() != localSlice.hash.ToLower())
+                            if (remoteSlice.grainUUIDsHash.ToLower() != localSlice.grainUUIDsHash.ToLower())
                             {
                                 hashMatch = false;
                             }
@@ -984,14 +1082,26 @@ namespace SandpiperInspector
                     if (!foundLocalSlice)
                     {// no local slice was found
                         slice newSlice = new slice();
-                        newSlice.slice_id = remoteSlice.slice_id; newSlice.slice_type = remoteSlice.slice_type; newSlice.name = remoteSlice.name; newSlice.slicemetadata = remoteSlice.slicemetadata; newSlice.hash = remoteSlice.hash;
+                        newSlice.sliceUUID = remoteSlice.sliceUUID;
+                        newSlice.poolUUID = remoteSlice.poolUUID;
+                        newSlice.sliceType = remoteSlice.sliceType; 
+                        newSlice.fileName = remoteSlice.fileName;
+                        newSlice.sliceDescription = remoteSlice.sliceDescription;
+                        newSlice.sliceMetadata = remoteSlice.sliceMetadata;
+                        newSlice.grainUUIDsHash = remoteSlice.grainUUIDsHash;
                         slicesToAdd.Add(newSlice);
                     }
 
                     if (!hashMatch)
                     {// slice found with non-matching hash. We need to get the remote (primary) slice
                         slice newSlice = new slice();
-                        newSlice.slice_id = remoteSlice.slice_id; newSlice.slice_type = remoteSlice.slice_type; newSlice.name = remoteSlice.name; newSlice.slicemetadata = remoteSlice.slicemetadata; newSlice.hash = remoteSlice.hash;
+                        newSlice.sliceUUID = remoteSlice.sliceUUID;
+                        newSlice.poolUUID = remoteSlice.poolUUID;
+                        newSlice.sliceType = remoteSlice.sliceType;
+                        newSlice.sliceDescription = remoteSlice.sliceDescription;
+                        newSlice.fileName = remoteSlice.fileName;
+                        newSlice.sliceMetadata = remoteSlice.sliceMetadata; 
+                        newSlice.grainUUIDsHash = remoteSlice.grainUUIDsHash;
                         slicesToUpdate.Add(newSlice);
                     }
                 }
@@ -1002,7 +1112,7 @@ namespace SandpiperInspector
                     foundRemoteSlice = false;
                     foreach (slice remoteSlice in remoteSlices)
                     {
-                        if (remoteSlice.slice_id == localSlice.slice_id)
+                        if (remoteSlice.sliceUUID == localSlice.sliceUUID)
                         {// found a sliceid match
                             foundRemoteSlice = true;
                             break;
@@ -1012,106 +1122,177 @@ namespace SandpiperInspector
                     if (!foundRemoteSlice)
                     {
                         slice newSlice = new slice();
-                        newSlice.slice_id = localSlice.slice_id; newSlice.slice_type = localSlice.slice_type; newSlice.name = localSlice.name; newSlice.slicemetadata = localSlice.slicemetadata; newSlice.hash = localSlice.hash;
+                        newSlice.sliceUUID = localSlice.sliceUUID;
+                        newSlice.poolUUID = localSlice.poolUUID;
+                        newSlice.sliceType = localSlice.sliceType;
+                        newSlice.sliceDescription = localSlice.sliceDescription;
+                        newSlice.fileName = localSlice.fileName; 
+                        newSlice.sliceMetadata = localSlice.sliceMetadata; 
+                        newSlice.grainUUIDsHash = localSlice.grainUUIDsHash;
                         slicesToDrop.Add(newSlice);
                     }
                 }
             }
         }
 
+        /*
+                public bool SQLiteInit(string cacheDir)
+                {
+                    bool returnVal = false;
+                    sqlite_conn.ConnectionString = "Data Source=" + cacheDir + @"\sandpiper.db; Version = 3; New = True; Compress = True;";
 
-        public bool SQLiteInit(string cacheDir)
+                    using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                    {
+                        try
+                        {
+                            sqlite_conn.Open();
+
+                            sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS slices (sliceid VARCHAR(64) PRIMARY KEY, slicetype VARCHAR(64), name VARCHAR(255), slicemetadata TEXT, remotehash VARCHAR(64), localhash VARCHAR(64))";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON slice (sliceid);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+
+                            sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS grain (id INTEGER PRIMARY KEY AUTOINCREMENT, grainid VARCHAR(64), source VARCHAR(255), payload_len INTEGER, grain_key VARCHAR(32), description VARCHAR(255), encoding VARCHAR(32), payload TEXT)";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON grain (grainid);";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grain_key ON grain (grain_key);";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_source ON grain (source);";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_payload_len ON grain (payload_len);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+
+
+                            sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS slice_grain (id INTEGER PRIMARY KEY AUTOINCREMENT, sliceid VARCHAR(64), grainid VARCHAR(64))";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON slice_grain (sliceid);";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON slice_grain (grainid);";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid_grainid ON slice_grain (sliceid,grainid);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+
+
+
+                            sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS activity (id INTEGER PRIMARY KEY AUTOINCREMENT, description varchar(255), planid VARCHAR(64), sliceid VARCHAR(64), grainid VARCHAR(64), timestamp DATETIME)";
+                            sqlite_cmd.ExecuteNonQuery();
+
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_planid ON activity (planid);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON activity (sliceid);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON activity (grainid);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_timestamp ON activity (timestamp);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+                            sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_description ON activity (description);";
+                            sqlite_cmd.ExecuteNonQuery();
+
+
+
+
+                            // create indexes on activity table here
+
+
+                            sqlite_cmd.CommandText = "PRAGMA journal_mode = WAL;";
+                            sqlite_cmd.ExecuteNonQuery();
+                            sqlite_cmd.CommandText = "PRAGMA synchronous = NORMAL;";
+                            sqlite_cmd.ExecuteNonQuery();
+
+
+                            SQliteDatabaseInitialized = true;
+                            returnVal = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            historyRecords.Add("failed opening SQLite database: " + ex.Message);
+                        }
+                    }
+                    return returnVal;
+                }
+
+                */
+
+
+        public bool SQLiteInit(string cacheDir, List<string> SQLcommandStringList)
         {
             bool returnVal = false;
             sqlite_conn.ConnectionString = "Data Source=" + cacheDir + @"\sandpiper.db; Version = 3; New = True; Compress = True;";
 
             using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
             {
+                string lastCommand = "";
                 try
                 {
                     sqlite_conn.Open();
 
-                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS slice (sliceid VARCHAR(64) PRIMARY KEY, slicetype VARCHAR(64), name VARCHAR(255), slicemetadata TEXT, remotehash VARCHAR(64), localhash VARCHAR(64))";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON slice (sliceid);";
-                    sqlite_cmd.ExecuteNonQuery();
+                    foreach (string SQLcommandString in SQLcommandStringList)
+                    {
 
+                        lastCommand = SQLcommandString;
+                        sqlite_cmd.CommandText = SQLcommandString;
+                        sqlite_cmd.ExecuteNonQuery();
 
-                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS grain (id INTEGER PRIMARY KEY AUTOINCREMENT, grainid VARCHAR(64), source VARCHAR(255), payload_len INTEGER, grain_key VARCHAR(32), description VARCHAR(255), encoding VARCHAR(32), payload TEXT)";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON grain (grainid);";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grain_key ON grain (grain_key);";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_source ON grain (source);";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_payload_len ON grain (payload_len);";
-                    sqlite_cmd.ExecuteNonQuery();
+                        sqlite_cmd.CommandText = "PRAGMA journal_mode = WAL;";
+                        sqlite_cmd.ExecuteNonQuery();
+                        sqlite_cmd.CommandText = "PRAGMA synchronous = NORMAL;";
+                        sqlite_cmd.ExecuteNonQuery();
 
+                        SQliteDatabaseInitialized = true;
+                        returnVal = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("failed initializing SQLite database: " + ex.Message + "\r\n    "+ lastCommand);
+                }
+            }
+            return returnVal;
+        }
 
+        public bool SQLiteOpen(string cacheDir)
+        {
+            bool returnVal = false;
+            sqlite_conn.ConnectionString = "Data Source=" + cacheDir + @"\sandpiper.db; Version = 3; New = False; Compress = True;";
 
-                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS slice_grain (id INTEGER PRIMARY KEY AUTOINCREMENT, sliceid VARCHAR(64), grainid VARCHAR(64))";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON slice_grain (sliceid);";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON slice_grain (grainid);";
-                    sqlite_cmd.ExecuteNonQuery();
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid_grainid ON slice_grain (sliceid,grainid);";
-                    sqlite_cmd.ExecuteNonQuery();
-
-
-
-
-                    sqlite_cmd.CommandText = "CREATE TABLE IF NOT EXISTS activity (id INTEGER PRIMARY KEY AUTOINCREMENT, description varchar(255), planid VARCHAR(64), sliceid VARCHAR(64), grainid VARCHAR(64), timestamp DATETIME)";
-                    sqlite_cmd.ExecuteNonQuery();
-
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_planid ON activity (planid);";
-                    sqlite_cmd.ExecuteNonQuery();
-
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_sliceid ON activity (sliceid);";
-                    sqlite_cmd.ExecuteNonQuery();
-
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_grainid ON activity (grainid);";
-                    sqlite_cmd.ExecuteNonQuery();
-
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_timestamp ON activity (timestamp);";
-                    sqlite_cmd.ExecuteNonQuery();
-
-                    sqlite_cmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_description ON activity (description);";
-                    sqlite_cmd.ExecuteNonQuery();
-
-
-
-
-                    // create indexes on activity table here
-
-
+            using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+            {
+                try
+                {
+                    sqlite_conn.Open();
                     sqlite_cmd.CommandText = "PRAGMA journal_mode = WAL;";
                     sqlite_cmd.ExecuteNonQuery();
                     sqlite_cmd.CommandText = "PRAGMA synchronous = NORMAL;";
                     sqlite_cmd.ExecuteNonQuery();
-                    
 
                     SQliteDatabaseInitialized = true;
                     returnVal = true;
                 }
                 catch (Exception ex)
                 {
-                    historyRecords.Add("failed opening SQLite database: " + ex.Message);
+                    historyRecords.Add("failed open SQLite database ("+ cacheDir + @"\sandpiper.db): " + ex.Message);
                 }
             }
             return returnVal;
         }
 
 
-        public bool localSliceExists(string sliceid)
+        public bool localSliceExists(string sliceUUID)
         {
             bool returnVal = false;
             if (SQliteDatabaseInitialized)
             {
                 using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                 {
-                    sqlite_cmd.CommandText = "SELECT sliceid FROM slice where sliceid='" + sliceid + "'";
+                    sqlite_cmd.CommandText = "SELECT sliceDescription FROM slices where sliceUUID='" + sliceUUID + "'";
 
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
@@ -1125,36 +1306,15 @@ namespace SandpiperInspector
             return returnVal;
         }
 
-        public string localSliceHash(string sliceid)
-        {
-            string returnVal = "";
-            if (SQliteDatabaseInitialized)
-            {
-                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
-                {
-                    sqlite_cmd.CommandText = "SELECT grainhash FROM slice where sliceid='" + sliceid + "'";
 
-                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
-                    {
-                        if (sqlite_datareader.Read())
-                        {
-                            returnVal = sqlite_datareader.GetString(0);
-                        }
-                    }
-                }
-            }
-            return returnVal;
-        }
-
-
-        public bool localGrainSliceRecordExists(string grainid, string sliceid)
+        public bool localSliceGrainsRecordExists(string grainUUID, string sliceUUID)
         {
             bool returnVal = false;
             if (SQliteDatabaseInitialized)
             {
                 using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                 {
-                    sqlite_cmd.CommandText = "SELECT id FROM slice_grain where sliceid='" + sliceid + "' and grainid='"+grainid+"'";
+                    sqlite_cmd.CommandText = "SELECT sliceGrainID FROM slice_grains where sliceUUID='" + sliceUUID + "' and grainUUID='"+grainUUID+"'";
 
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
@@ -1168,14 +1328,14 @@ namespace SandpiperInspector
             return returnVal;
         }
 
-        public bool localGrainRecordExists(string grainid)
+        public bool localGrainRecordExists(string grainUUID)
         {
             bool returnVal = false;
             if (SQliteDatabaseInitialized)
             {
                 using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                 {
-                    sqlite_cmd.CommandText = "SELECT id FROM grain where grainid='" + grainid + "'";
+                    sqlite_cmd.CommandText = "SELECT grainUUID FROM grains where grainUUID='" + grainUUID + "'";
 
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
@@ -1192,7 +1352,7 @@ namespace SandpiperInspector
 
 
 
-        public slice getLocalSlice(string sliceid)
+        public slice getLocalSlice(string sliceUUID)
         {
             slice s = null;
 
@@ -1200,18 +1360,19 @@ namespace SandpiperInspector
             {
                 using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                 {
-                    sqlite_cmd.CommandText = "SELECT sliceid, slicetype, name, slicemetadata, remotehash, localhash FROM slice where sliceid='" + sliceid + "'";
+                    sqlite_cmd.CommandText = "SELECT sliceUUID, poolUUID, sliceDescription, sliceType, fileName, '' as slicemetadata FROM slices where sliceUUID='" + sliceUUID + "'";
 
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
                         s = new slice();
                         if(sqlite_datareader.Read())
                         {
-                            s.slice_id = sqlite_datareader.GetString(0);
-                            s.slice_type = sqlite_datareader.GetString(1);
-                            s.name = sqlite_datareader.GetString(2);
-                            s.slicemetadata= sqlite_datareader.GetString(3);
-                            s.hash = sqlite_datareader.GetString(4);
+                            s.sliceUUID = sqlite_datareader.GetString(0);
+                            s.poolUUID= sqlite_datareader.GetString(1);
+                            s.sliceDescription = sqlite_datareader.GetString(2);
+                            s.sliceType = sqlite_datareader.GetString(3);
+                            s.fileName = sqlite_datareader.GetString(4);
+                            s.sliceMetadata= sqlite_datareader.GetString(5);
                         }
                     }
                 }
@@ -1227,22 +1388,28 @@ namespace SandpiperInspector
             {
                 using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                 {
-                    sqlite_cmd.CommandText = "SELECT sliceid, slicetype, name, slicemetadata, localhash FROM slice order by name";
+                    sqlite_cmd.CommandText = "SELECT sliceUUID, poolUUID, sliceDescription, sliceType, fileName, '' as slicemetadata FROM slices order by sliceOrder";
 
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
                         while (sqlite_datareader.Read())
                         {
                             slice s = new slice();
-                            s.slice_id = sqlite_datareader.GetString(0);
-                            s.slice_type = sqlite_datareader.GetString(1);
-                            s.name = sqlite_datareader.GetString(2);
-                            s.slicemetadata = sqlite_datareader.GetString(3);
-                            s.hash = sqlite_datareader.GetString(4);
+                            s.sliceUUID = sqlite_datareader.GetString(0);
+                            s.poolUUID = sqlite_datareader.GetString(1);
+                            s.sliceDescription = sqlite_datareader.GetString(2);
+                            s.sliceType = sqlite_datareader.GetString(3);
+                            s.fileName = sqlite_datareader.GetString(4);
+                            s.sliceMetadata = sqlite_datareader.GetString(5);
+                            s.grainUUIDsHash = refreshLocalSliceHash(s.sliceUUID);
                             returnVal.Add(s);
                         }
                     }
                 }
+
+
+
+
             }
             return returnVal;
         }
@@ -1252,7 +1419,7 @@ namespace SandpiperInspector
 
 
 
-        public List<grain> getGrainsInLocalSlice(string sliceid, bool with_payload)
+        public List<grain> getGrainsInLocalSlice(string sliceUUID, bool with_payload)
         {
             List<grain> grainslist = new List<grain>();
 
@@ -1262,11 +1429,34 @@ namespace SandpiperInspector
                 {
                     if (with_payload)
                     {
-                        sqlite_cmd.CommandText = "SELECT grain.grainid, slice_grain.sliceid, source, payload_len, grain_key, description, encoding, payload FROM grain,slice_grain where grain.grainid=slice_grain.grainid and slice_grain.sliceid='" + sliceid + "'";
+                        sqlite_cmd.CommandText = "SELECT" +
+                            " grains.grainUUID," +
+                            " slices.sliceUUID," +
+                            " grains.grainKey, " +
+                            " grains.grainReference," +
+                            " grain_payloads.encoding," +
+                            " length(payload) as payloadLen," +
+                            " grain_payloads.payload" +
+                            " FROM slices,slice_grains,grains,grain_payloads where" +
+                            " slices.sliceUUID=slice_grains.sliceUUID and " +
+                            " slice_grains.grainUUID=grains.grainUUID and" +
+                            " grains.grainUUID=grain_payloads.grainUUID and slices.sliceUUID='" + sliceUUID + "'";
                     }
                     else
                     {// leave out payload
-                        sqlite_cmd.CommandText = "SELECT grain.grainid, slice_grain.sliceid, source, payload_len, grain_key, description, encoding FROM grain,slice_grain where grain.grainid=slice_grain.grainid and slice_grain.sliceid='" + sliceid + "'";
+                        sqlite_cmd.CommandText =
+
+                            "SELECT" +
+                            " grains.grainUUID," +
+                            " slices.sliceUUID," +
+                            " grains.grainKey, " +
+                            " grains.grainReference," +
+                            " grain_payloads.encoding," +
+                            " length(payload) as payloadLen"+
+                            " FROM slices,slice_grains,grains,grain_payloads where" +
+                            " slices.sliceUUID=slice_grains.sliceUUID and " +
+                            " slice_grains.grainUUID=grains.grainUUID and" +
+                            " grains.grainUUID=grain_payloads.grainUUID and slices.sliceUUID='" + sliceUUID + "'";
                     }
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
@@ -1274,17 +1464,16 @@ namespace SandpiperInspector
                         while (sqlite_datareader.Read())
                         {
                             grain g = new grain();
-                            g.id = sqlite_datareader.GetString(0);
-                            g.slice_id = sqlite_datareader.GetString(1);
-                            g.source = sqlite_datareader.GetString(2);
-                            g.payload_len = sqlite_datareader.GetInt32(3);
-                            g.grain_key = sqlite_datareader.GetString(4);
-                            g.description = sqlite_datareader.GetString(5);
-                            g.encoding = sqlite_datareader.GetString(6);
+                            g.grainUUID = sqlite_datareader.GetString(0);
+                            g.sliceUUID = sqlite_datareader.GetString(1);
+                            g.grainKey= sqlite_datareader.GetString(2);
+                            g.grainReference= sqlite_datareader.GetString(3);
+                            g.encoding = sqlite_datareader.GetString(4);
                             g.payload = "";
+                            g.payloadLen = sqlite_datareader.GetInt32(5);
                             if (with_payload)
                             {
-                                g.payload = sqlite_datareader.GetString(7);
+                                g.payload = sqlite_datareader.GetString(6);
                             }
                             grainslist.Add(g);
                         }
@@ -1299,7 +1488,7 @@ namespace SandpiperInspector
 
 
 
-        public grain getLocalGrain(string grainid, bool with_payload)
+        public grain getLocalGrain(string grainUUID, bool with_payload)
         {
             grain g = new grain();
 
@@ -1309,29 +1498,41 @@ namespace SandpiperInspector
                 {
                     if (with_payload)
                     {
-                        sqlite_cmd.CommandText = "SELECT grainid, source, payload_len, grain_key, description, encoding, payload FROM grain where grainid='" + grainid + "'";
+                        sqlite_cmd.CommandText = "SELECT" +
+                            " grains.grainUUID," +
+                            " grains.grainKey, " +
+                            " grains.grainReference," +
+                            " grain_payloads.encoding," +
+                            " length(payload) as payloadLen," +
+                            " grain_payloads.payload" +
+                            " FROM grains, grain_payloads where" +
+                            " grains.grainUUID=grain_payloads.grainUUID and grains.grainUUID='" + grainUUID + "'";
                     }
                     else
                     {// leave out payload
-                        sqlite_cmd.CommandText = "SELECT grainid, source, payload_len, grain_key, description, encoding FROM grain where grainid='" + grainid + "'";
+                        sqlite_cmd.CommandText = "SELECT" +
+                            " grains.grainUUID," +
+                            " grains.grainKey, " +
+                            " grains.grainReference," +
+                            " grain_payloads.encoding," +
+                            " length(payload) as payloadLen" +
+                            " FROM grains, grain_payloads where" +
+                            " grains.grainUUID=grain_payloads.grainUUID and grains.grainUUID='" + grainUUID + "'";
                     }
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
 
                         while (sqlite_datareader.Read())
                         {
-                            g.id = sqlite_datareader.GetString(0);
-                            g.slice_id = "";
-                            g.source = sqlite_datareader.GetString(1);
-                            g.localfilename = sqlite_datareader.GetString(1);
-                            g.payload_len = sqlite_datareader.GetInt32(2);
-                            g.grain_key = sqlite_datareader.GetString(3);
-                            g.description = sqlite_datareader.GetString(4);
-                            g.encoding = sqlite_datareader.GetString(5);
+                            g.grainUUID= sqlite_datareader.GetString(0);
+                            g.grainKey = sqlite_datareader.GetString(1);
+                            g.grainReference = sqlite_datareader.GetString(2);
+                            g.encoding = sqlite_datareader.GetString(3);
+                            g.payloadLen = sqlite_datareader.GetInt32(4);
                             g.payload = "";
                             if (with_payload)
                             {
-                                g.payload = sqlite_datareader.GetString(6);
+                                g.payload = sqlite_datareader.GetString(5);
                             }
                         }
                     }
@@ -1350,14 +1551,14 @@ namespace SandpiperInspector
 
 
 
-        public int countGrainsInLocalSlice(string sliceid)
+        public int countGrainsInLocalSlice(string sliceUUID)
         {
             int returnVal = 0;
             if (SQliteDatabaseInitialized)
             {
                 using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                 {
-                    sqlite_cmd.CommandText = "SELECT count(id) as graincount FROM slice_grain where sliceid='" + sliceid + "'";
+                    sqlite_cmd.CommandText = "SELECT count(sliceGrainID) as graincount FROM slice_grains where sliceUUID='" + sliceUUID + "'";
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
                         while (sqlite_datareader.Read())
@@ -1378,18 +1579,18 @@ namespace SandpiperInspector
             {
                 try
                 {
-                    if (localSliceExists(s.slice_id))
+                    if (localSliceExists(s.sliceUUID))
                     {// slice exists - update it
 
-                        sqlite_cmd.CommandText = "UPDATE slice set slicetype='" + s.slice_type + "', name='" + s.name + "', slicemetadata='" + s.slicemetadata + "', remotehash='" + s.hash + "' where sliceid='"+s.slice_id+"';";
-                        historyRecords.Add("addLocalSlice(" + s.slice_id + ") - slice record already exists. Updating existing record.");
-                        logActivity("", s.slice_id, "", "slice record updated (" + s.name + ")");
+                        sqlite_cmd.CommandText = "UPDATE slices set sliceType='" + s.sliceType + "', sliceDescription='" + s.sliceDescription + "' where sliceUUID='"+s.sliceUUID+"';";
+                        historyRecords.Add("addLocalSlice(" + s.sliceUUID + ") - slice record already exists. Updating existing record.");
+                        logActivity("", s.sliceUUID, "", "slice record updated (" + s.sliceDescription + ")");
                     }
                     else
                     {// slice does not exist - insert it
 
-                        sqlite_cmd.CommandText = "INSERT INTO slice (sliceid, slicetype, name, slicemetadata, remotehash, localhash) VALUES ('" + s.slice_id + "','" + s.slice_type + "','" + s.name + "','" + s.slicemetadata + "','" + s.hash + "','');";
-                        logActivity("", s.slice_id, "", "slice record added ("+s.name+")");
+                        sqlite_cmd.CommandText = "INSERT INTO slices (sliceUUID, poolUUID, sliceDescription, sliceType, fileName, sliceOrder, createdOn) VALUES ('" + s.sliceUUID + "','" + s.poolUUID+ "','" + s.sliceDescription + "','" + s.sliceType + "','" + s.fileName + "'," + s.sliceOrder.ToString() + ",DATE('now'));";
+                        logActivity("", s.sliceUUID, "", "slice record added ("+s.sliceDescription+")");
 
                     }
 
@@ -1398,7 +1599,7 @@ namespace SandpiperInspector
                 }
                 catch (Exception ex)
                 {
-                    historyRecords.Add("addLocalSlice(" + s.slice_id + ") - failed inserting slice record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                    historyRecords.Add("addLocalSlice(" + s.sliceUUID + ") - failed inserting slice record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
                 }
             }
             return returnVal;
@@ -1419,25 +1620,35 @@ namespace SandpiperInspector
             {
                 try
                 {
-                    if(!localGrainRecordExists(g.id))
+                    if(!localGrainRecordExists(g.grainUUID))
                     {
-                        sqlite_cmd.CommandText = "INSERT INTO grain (grainid, source, payload_len, grain_key, description, encoding, payload) VALUES ('" + g.id + "', '" + g.source + "'," + g.payload_len.ToString() + ",'" + g.grain_key + "','" + g.description + "','" + g.encoding + "','" + g.payload + "');";
+                        sqlite_cmd.CommandText = "INSERT INTO grains (grainUUID, grainKey, grainReference, createdOn) VALUES ('" + g.grainUUID + "','" + g.grainKey + "','" + g.grainReference  + "',DATE('now'));";
                         sqlite_cmd.ExecuteNonQuery();
                     }
                     else
                     {
-                        historyRecords.Add("addLocalGrain(() - grain " + g.id + " already exists. Skipping grain insert");
+                        historyRecords.Add("addLocalGrain(() - grain " + g.grainUUID + " already exists. Skipping grain insert");
                     }
 
-                    if (!localGrainSliceRecordExists(g.id, g.slice_id))
+
+                    if (!localSliceGrainsRecordExists(g.grainUUID, g.sliceUUID))
                     {
-                        sqlite_cmd.CommandText = "INSERT INTO slice_grain (sliceid, grainid) VALUES ('" + g.slice_id + "', '" + g.id + "');";
+                        sqlite_cmd.CommandText = "INSERT INTO slice_grains (sliceUUID, grainUUID,grainOrder) VALUES ('" + g.sliceUUID + "','" + g.grainUUID + "',0);";
                         sqlite_cmd.ExecuteNonQuery();
                     }
                     else
                     {
-                        historyRecords.Add("addLocalGrain(() - slice/grain (" + g.slice_id + " / " + g.id + ") record already exists. Skipping slice_grain insert");
+                        historyRecords.Add("addLocalGrain(() - slice/grain (" + g.sliceUUID + " / " + g.grainUUID + ") record already exists. Skipping slice_grain insert");
                     }
+
+                    // delete the paylod rec (in case it exists)
+                    sqlite_cmd.CommandText = "DELETE FROM grain_payloads where grainUUID='" + g.grainUUID + "';";
+                    sqlite_cmd.ExecuteNonQuery();
+
+                    // we need to re-work this into a bound-paramter insert because the payload can contain unsafe characters
+                    sqlite_cmd.CommandText = "INSERT INTO grain_payloads (grainUUID, encoding, payload) VALUES ('" + g.grainUUID + "','" + g.encoding+ "','" + g.payload + "');";
+                    sqlite_cmd.ExecuteNonQuery();
+
                 }
                 catch (Exception ex)
                 {
@@ -1452,7 +1663,7 @@ namespace SandpiperInspector
          * does not delete the grain records
          * 
          */
-        public bool dropLocalSlice(string sliceid)
+        public bool dropLocalSlice(string sliceUUID)
         {
             bool returnVal = false;
 
@@ -1460,17 +1671,17 @@ namespace SandpiperInspector
             {
                 try
                 {
-                    sqlite_cmd.CommandText = "DELETE FROM slice where sliceid='" + sliceid + "'";
+                    sqlite_cmd.CommandText = "DELETE FROM slices where sliceUUID='" + sliceUUID + "'";
                     sqlite_cmd.ExecuteNonQuery();
 
-                    sqlite_cmd.CommandText = "DELETE FROM slice_grain where sliceid='" + sliceid + "'";
+                    sqlite_cmd.CommandText = "DELETE FROM slice_grains where sliceUUID='" + sliceUUID + "'";
                     sqlite_cmd.ExecuteNonQuery();
 
                     returnVal = true;
                 }
                 catch (Exception ex)
                 {
-                    historyRecords.Add("dropLocalSlice("+sliceid+") - failed deleting slice or slice_grain records: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                    historyRecords.Add("dropLocalSlice("+sliceUUID+") - failed deleting slice or slice_grain records: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
                 }
             }
 
@@ -1482,21 +1693,21 @@ namespace SandpiperInspector
             List<sandpiperClient.slice> localSlices = getLocalSlices();
             foreach (sandpiperClient.slice s in localSlices)
             {
-                refreshLocalSliceHash(s.slice_id);
+                refreshLocalSliceHash(s.sliceUUID);
             }
         }
 
 
-        public bool refreshLocalSliceHash(string sliceid)
+        public string refreshLocalSliceHash(string sliceUUID)
         {
-            bool returnVal = false;
+            string hash = "";
             List<string> grainids = new List<string>();
 
             if (SQliteDatabaseInitialized)
             {
                 using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                 {
-                    sqlite_cmd.CommandText = "SELECT grainid FROM slice_grain where slice_grain.sliceid='" + sliceid + "' order by grainid";
+                    sqlite_cmd.CommandText = "SELECT grainUUID FROM slice_grains where sliceUUID='" + sliceUUID + "' order by grainUUID";
 
                     using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                     {
@@ -1507,22 +1718,20 @@ namespace SandpiperInspector
                     }
                 }
 
-                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
-                {
-                    try
-                    {
-                        sqlite_cmd.CommandText = "UPDATE slice set localhash='" + md5(string.Join("", grainids)) + "' where sliceid='" + sliceid + "';";
-                        sqlite_cmd.ExecuteNonQuery();
-                        returnVal = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        historyRecords.Add("refreshLocalSliceHash(" + sliceid + ") - failed updating slice record: " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
-                    }
+                hash = md5(string.Join("", grainids));
+
+                if (localSliceHashes.ContainsKey(sliceUUID))
+                {// entry already exists for this slice - update it
+                    localSliceHashes[sliceUUID] = hash;
+                }
+                else
+                {// slice does not exist in the dictionary - add it
+                    localSliceHashes.Add(sliceUUID, hash);
                 }
             }
 
-            return returnVal;
+            return hash;
+
         }
 
 
@@ -1549,6 +1758,8 @@ namespace SandpiperInspector
         // delete any slice_grain record that does not have a valid grainid
         public void cleanupDatabase()
         {
+
+            /*
             using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
             {
                 try
@@ -1588,7 +1799,7 @@ namespace SandpiperInspector
                 }
             }
 
-
+            */
 
         }
 
