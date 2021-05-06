@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 /*
  * to-do list 
- *      include the grain filename on the slice selector popup when a new grain is discovered
+ *      include the grain file_name on the slice selector popup when a new grain is discovered
  *      thwart the human's ability to drop in grains if the node is a secondary
  *      
  */
@@ -50,7 +50,7 @@ namespace SandpiperInspector
         private void Form1_Load(object sender, EventArgs e)
         {
 
-            sandpiper.defaultPlandocumentSchema = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:vc=\"http://www.w3.org/2007/XMLSchema-versioning\" vc:minVersion=\"1.1\" elementFormDefault=\"qualified\">\r\n\t<!-- Basic types -->\r\n\t<xs:simpleType name=\"uuid\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:length value=\"36\" fixed=\"true\"/>\r\n\t\t\t<xs:pattern value=\"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Medium\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Short\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"40\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Email\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t\t<xs:pattern value=\"[^\\s]+@[^\\s]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldName\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"63\"/>\r\n\t\t\t<xs:pattern value=\"[A-Za-z][A-Za-z0-9_\\-]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldValue\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Levels\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:enumeration value=\"1-1\"/>\r\n\t\t\t<xs:enumeration value=\"1-2\"/>\r\n\t\t\t<xs:enumeration value=\"2\"/>\r\n\t\t\t<xs:enumeration value=\"3\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<!-- Attribute templates used in multiple places -->\r\n\t<xs:attributeGroup name=\"Model\">\r\n\t\t<xs:attribute name=\"uuid\" type=\"uuid\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Main\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Optional\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t</xs:attributeGroup>\r\n\t<!-- Element templates used in multiple places -->\r\n\t<xs:complexType name=\"LinkGroup\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"UniqueLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"MultiLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<xs:element name=\"MultLinkEntry\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t</xs:complexType>\r\n\t<xs:complexType name=\"Instance\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"Software\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t<xs:attribute name=\"version\" type=\"String_Short\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"Capability\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<!-- If a server is available, it is listed here -->\r\n\t\t\t\t\t\t<xs:element name=\"Response\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"uri\" type=\"xs:string\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"role\">\r\n\t\t\t\t\t\t\t\t\t<xs:simpleType>\r\n\t\t\t\t\t\t\t\t\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Synchronization\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Authentication\"/>\r\n\t\t\t\t\t\t\t\t\t\t</xs:restriction>\r\n\t\t\t\t\t\t\t\t\t</xs:simpleType>\r\n\t\t\t\t\t\t\t\t</xs:attribute>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"level\" type=\"Levels\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t</xs:complexType>\r\n\t<!-- Main schema -->\r\n\t<xs:element name=\"Plan\">\r\n\t\t<xs:complexType>\r\n\t\t\t<xs:sequence>\r\n\t\t\t\t<xs:element name=\"Primary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Controller\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Admin\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"contact\" type=\"String_Medium\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"email\" type=\"Email\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Pools\" maxOccurs=\"1\" minOccurs=\"0\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Pool\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryPoolLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slices\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slice\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"SliceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Communal\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Subscriptions\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Subscription\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<!-- Not part of Sandpiper 1.0 - future use -->\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfiles\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfile\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"sliceuuid\" type=\"uuid\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Secondary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"SecondaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t</xs:sequence>\r\n\t\t\t<xs:attribute name=\"uuid\" type=\"uuid\"/>\r\n\t\t</xs:complexType>\r\n\t</xs:element>\r\n</xs:schema>";
+            sandpiper.defaultPlandocumentSchema = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:vc=\"http://www.w3.org/2007/XMLSchema-versioning\" vc:minVersion=\"1.1\" elementFormDefault=\"qualified\">\r\n\t<!-- Basic types -->\r\n\t<xs:simpleType name=\"uuid\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:length value=\"36\" fixed=\"true\"/>\r\n\t\t\t<xs:pattern value=\"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Medium\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Short\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"40\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Email\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t\t<xs:pattern value=\"[^\\s]+@[^\\s]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldName\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"63\"/>\r\n\t\t\t<xs:pattern value=\"[A-Za-z][A-Za-z0-9_\\-]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldValue\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Levels\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:enumeration value=\"1-1\"/>\r\n\t\t\t<xs:enumeration value=\"1-2\"/>\r\n\t\t\t<xs:enumeration value=\"2\"/>\r\n\t\t\t<xs:enumeration value=\"3\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<!-- Attribute templates used in multiple places -->\r\n\t<xs:attributeGroup name=\"Model\">\r\n\t\t<xs:attribute name=\"uuid\" type=\"uuid\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Main\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Optional\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t</xs:attributeGroup>\r\n\t<!-- Element templates used in multiple places -->\r\n\t<xs:complexType name=\"LinkGroup\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"UniqueLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"MultiLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<xs:element name=\"MultLinkEntry\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t</xs:complexType>\r\n\t<xs:complexType name=\"Instance\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"Software\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t<xs:attribute name=\"version\" type=\"String_Short\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"Capability\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<!-- If a server is available, it is listed here -->\r\n\t\t\t\t\t\t<xs:element name=\"Response\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"uri\" type=\"xs:string\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"role\">\r\n\t\t\t\t\t\t\t\t\t<xs:simpleType>\r\n\t\t\t\t\t\t\t\t\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Synchronization\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Authentication\"/>\r\n\t\t\t\t\t\t\t\t\t\t</xs:restriction>\r\n\t\t\t\t\t\t\t\t\t</xs:simpleType>\r\n\t\t\t\t\t\t\t\t</xs:attribute>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"level\" type=\"Levels\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t</xs:complexType>\r\n\t<!-- Main schema -->\r\n\t<xs:element name=\"Plan\">\r\n\t\t<xs:complexType>\r\n\t\t\t<xs:sequence>\r\n\t\t\t\t<xs:element name=\"Primary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Controller\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Admin\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"contact\" type=\"String_Medium\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"email\" type=\"Email\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Pools\" maxOccurs=\"1\" minOccurs=\"0\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Pool\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryPoolLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slices\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slice\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"SliceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Communal\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Subscriptions\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Subscription\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<!-- Not part of Sandpiper 1.0 - future use -->\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfiles\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfile\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"slice_uuid\" type=\"uuid\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Secondary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"SecondaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t</xs:sequence>\r\n\t\t\t<xs:attribute name=\"uuid\" type=\"uuid\"/>\r\n\t\t</xs:complexType>\r\n\t</xs:element>\r\n</xs:schema>";
             sandpiper.SQliteDatabaseInitialized = false;
 
 
@@ -340,7 +340,7 @@ namespace SandpiperInspector
                     if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("deleteSliceAsync(" + textBoxServerBaseURL.Text + "/v1/slices)"); }
                     await sandpiper.deleteSliceAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW);
                     sandpiper.awaitingServerResponse = false;
-                    sandpiper.historyRecords.Add("    Deleted slice: " + sandpiper.slicesToDrop[0].sliceDescription + " (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
+                    sandpiper.historyRecords.Add("    Deleted slice: " + sandpiper.slicesToDrop[0].slice_description + " (" + (10 * sandpiper.responseTime).ToString() + " mS response time)");
                     sandpiper.slicesToDrop.RemoveAt(0);
                     if (sandpiper.slicesToDrop.Count() == 0)
                     {// done dropping hitlist of remote secondary slices
@@ -361,7 +361,7 @@ namespace SandpiperInspector
 
                 case (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_SLICES_AWAITING:
                     sandpiper.responseTime++;
-                    lblStatus.Text = "Deleting slice: " + sandpiper.slicesToDrop[0].sliceDescription + " (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)  " + sandpiper.slicesToDrop.Count().ToString() + " slices remaining";
+                    lblStatus.Text = "Deleting slice: " + sandpiper.slicesToDrop[0].slice_description + " (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)  " + sandpiper.slicesToDrop.Count().ToString() + " slices remaining";
                     break;
 
                 case (int)sandpiperClient.interactionStates.REMOTE_SEC_DROP_GRAINS_AWAITING:
@@ -416,7 +416,7 @@ namespace SandpiperInspector
                         // execute the local slices drops 
                         foreach (sandpiperClient.slice s in sandpiper.slicesToDrop)
                         {// each of these needs to be dropped from the local cache 
-                            sandpiper.dropLocalSlice(s.sliceUUID);
+                            sandpiper.dropLocalSlice(s.slice_uuid);
                         }
                         localContentTreeIsUpToDate = false;
                    //     sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
@@ -442,12 +442,12 @@ namespace SandpiperInspector
                         foreach (sandpiperClient.slice s in sandpiper.slicesToUpdate)
                         {
                             sandpiperClient.slice newSlice = new sandpiperClient.slice();
-                            newSlice.sliceUUID = s.sliceUUID; newSlice.poolUUID = s.poolUUID; newSlice.sliceDescription = s.sliceDescription; newSlice.fileName = s.fileName; newSlice.sliceType = s.sliceType;newSlice.sliceMetadata = s.sliceMetadata; newSlice.sliceOrder = s.sliceOrder; newSlice.grainUUIDsHash = s.grainUUIDsHash;
+                            newSlice.slice_uuid = s.slice_uuid; newSlice.pool_uuid = s.pool_uuid; newSlice.slice_description = s.slice_description; newSlice.file_name = s.file_name; newSlice.slice_type = s.slice_type;newSlice.slice_meta_data = s.slice_meta_data; newSlice.slice_order = s.slice_order; newSlice.slice_grainlist_hash = s.slice_grainlist_hash;
                             
                             tempSliceList.Add(newSlice);
 
                             sandpiper.addLocalSlice(newSlice);
-                            sandpiper.logActivity("", newSlice.sliceUUID, "", "slice (" + newSlice.sliceDescription + ") added to local pool");
+                            sandpiper.logActivity("", newSlice.slice_uuid, "", "slice (" + newSlice.slice_description + ") added to local pool");
                         }
                         localContentTreeIsUpToDate = false;
                     }
@@ -474,15 +474,15 @@ namespace SandpiperInspector
                     sandpiper.responseTime = 0;
                     sandpiper.awaitingServerResponse = true;
                     List<sandpiperClient.grain> grainsInRemoteSlice = new List<sandpiperClient.grain>();
-                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().sliceUUID + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
 
-                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().sliceUUID + "?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
+                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
 
                     // grainlist in hand is the remote primary's authoritative list of grains in the current slice
                     // determine the diffs list that need adding and dropping by comparing it to the local grainlist for the given slice
                     // we need to know the list of local gtains in this slice
                     List<sandpiperClient.grain> grainsInLocalSlice = new List<sandpiperClient.grain>();
-                    grainsInLocalSlice = sandpiper.getGrainsInLocalSlice(tempSliceList.First().sliceUUID,false);
+                    grainsInLocalSlice = sandpiper.getGrainsInLocalSlice(tempSliceList.First().slice_uuid,false);
 
                     sandpiper.grainsToTransfer.AddRange(sandpiper.differentialGrainsList(grainsInLocalSlice, grainsInRemoteSlice));
                     sandpiper.grainsToDrop.AddRange(sandpiper.differentialGrainsList(grainsInRemoteSlice, grainsInLocalSlice));
@@ -526,11 +526,11 @@ namespace SandpiperInspector
                     sandpiper.responseTime = 0;
                     sandpiper.awaitingServerResponse = true;
 
-                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().sliceUUID + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
 
                     List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
                         
-                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().grainUUID + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
+                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().grain_uuid + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
                     //should have gotten a single grain (one element in the returned list)
 
                     sandpiper.awaitingServerResponse = false;
@@ -538,14 +538,14 @@ namespace SandpiperInspector
                     if (grains.Count() == 1)
                     {// we got (and were expecting) a single grain in the response 
 
-                        sandpiper.historyRecords.Add("Downloaded grain:"+grains[0].source + "  in slice:"+grains[0].sliceUUID+ " - transfer took "+ (sandpiper.responseTime*10).ToString()+"mS");
+                        sandpiper.historyRecords.Add("Downloaded grain:"+grains[0].source + "  in slice:"+grains[0].slice_uuid+ " - transfer took "+ (sandpiper.responseTime*10).ToString()+"mS");
                         // save grain locally and update indexes
                         // when slice index is updated, use the slice hahses that were given at the begining of the transaction - because that was the point in time when we determined the grains diffs list and started downloading.
                         //  getting the hitlist of grains could take a long time, and it's possible that the primary's state has changed since then.
 
 
                         sandpiper.addLocalGrain(grains[0]);
-                        sandpiper.logActivity(grains[0].grainUUID, grains[0].sliceUUID, "",  "grain (" + grains[0].description + ") added to local pool");
+                        sandpiper.logActivity(grains[0].grain_uuid, grains[0].slice_uuid, "",  "grain (" + grains[0].description + ") added to local pool");
                        
                         sandpiper.grainsToTransfer.RemoveAt(0); // remove the gotten grain from the hitlist
                         if (sandpiper.grainsToTransfer.Count() > 0)
@@ -784,7 +784,7 @@ namespace SandpiperInspector
                 string[] chunks = e.Node.Name.Split('_');
                 if (sandpiper.looksLikeAUUID(chunks[1]))
                 {
-                    sandpiper.selectedGrain.grainUUID = chunks[1];
+                    sandpiper.selectedGrain.grain_uuid = chunks[1];
                 }
             }
 
@@ -793,7 +793,7 @@ namespace SandpiperInspector
                 string[] chunks = e.Node.Name.Split('_');
                 if (sandpiper.looksLikeAUUID(chunks[1]))
                 {
-                    sandpiper.selectedSlice.sliceUUID = chunks[1];
+                    sandpiper.selectedSlice.slice_uuid = chunks[1];
                 }
             }
         }
@@ -824,25 +824,25 @@ namespace SandpiperInspector
 
             foreach (sandpiperClient.slice s in localSlices)
             {
-                treeViewLocalContent.Nodes.Add("slice_" + s.sliceUUID, s.sliceDescription);
-                treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes.Add("slice_id", "Slice ID: " + s.sliceUUID);
-                treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes.Add("slice_type", "Type: " + s.sliceType);
-                treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes.Add("slice_metadata", "Metadata: " + s.sliceMetadata);
+                treeViewLocalContent.Nodes.Add("slice_" + s.slice_uuid, s.slice_description);
+                treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes.Add("slice_id", "Slice ID: " + s.slice_uuid);
+                treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes.Add("slice_type", "Type: " + s.slice_type);
+                treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes.Add("slice_metadata", "Metadata: " + s.slice_meta_data);
 
-                treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes.Add("grains", "Grains (" + sandpiper.countGrainsInLocalSlice(s.sliceUUID).ToString() + ")");
+                treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes.Add("grains", "Grains (" + sandpiper.countGrainsInLocalSlice(s.slice_uuid).ToString() + ")");
 
-                List<sandpiperClient.grain> localGrains = sandpiper.getGrainsInLocalSlice(s.sliceUUID,false);
+                List<sandpiperClient.grain> localGrains = sandpiper.getGrainsInLocalSlice(s.slice_uuid,false);
 
                 foreach (sandpiperClient.grain g in localGrains)
                 {
-                    if (g.sliceUUID != s.sliceUUID) { continue; }
+                    if (g.slice_uuid != s.slice_uuid) { continue; }
 
-                    treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes["grains"].Nodes.Add("grain_" + g.grainUUID, g.grainReference);
-                    treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes["grains"].Nodes["grain_" + g.grainUUID].Nodes.Add("id", "UUID: " + g.grainUUID);
-                    treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes["grains"].Nodes["grain_" + g.grainUUID].Nodes.Add("encoding", "Encoding: " + g.encoding);
-                    treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes["grains"].Nodes["grain_" + g.grainUUID].Nodes.Add("grainKey", "Grain Key: " + g.grainKey);
-                    treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes["grains"].Nodes["grain_" + g.grainUUID].Nodes.Add("source", "Source: " + g.source);
-                    treeViewLocalContent.Nodes["slice_" + s.sliceUUID].Nodes["grains"].Nodes["grain_" + g.grainUUID].Nodes.Add("payloadLen", "Payload Length: " + g.payloadLen.ToString());
+                    treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes["grains"].Nodes.Add("grain_" + g.grain_uuid, g.grain_reference);
+                    treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes["grains"].Nodes["grain_" + g.grain_uuid].Nodes.Add("id", "UUID: " + g.grain_uuid);
+                    treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes["grains"].Nodes["grain_" + g.grain_uuid].Nodes.Add("encoding", "Encoding: " + g.encoding);
+                    treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes["grains"].Nodes["grain_" + g.grain_uuid].Nodes.Add("grainKey", "Grain Key: " + g.grain_key);
+                    treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes["grains"].Nodes["grain_" + g.grain_uuid].Nodes.Add("source", "Source: " + g.source);
+                    treeViewLocalContent.Nodes["slice_" + s.slice_uuid].Nodes["grains"].Nodes["grain_" + g.grain_uuid].Nodes.Add("payloadLen", "Payload Length: " + g.payload_len.ToString());
                 }
             }
 
@@ -930,9 +930,9 @@ namespace SandpiperInspector
 
             if (e.KeyCode == Keys.Delete)
             {
-                if (sandpiper.looksLikeAUUID(sandpiper.selectedGrain.grainUUID))
+                if (sandpiper.looksLikeAUUID(sandpiper.selectedGrain.grain_uuid))
                 {
-                    deleteResult = await sandpiper.deleteGrainAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.selectedGrain.grainUUID, sandpiper.sessionJTW);
+                    deleteResult = await sandpiper.deleteGrainAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.selectedGrain.grain_uuid, sandpiper.sessionJTW);
                     if (deleteResult)
                     {
                         treeViewRemoteContent.SelectedNode.Remove();
@@ -974,10 +974,10 @@ namespace SandpiperInspector
                 f.createButtonClick += (mysender, mye) =>
                 {
 
-                    sandpiper.selectedSlice.sliceDescription = f.sliceDescription;
-                    sandpiper.selectedSlice.sliceType = f.sliceType;
-                    sandpiper.selectedSlice.sliceMetadata = f.sliceMetadata;
-                    sandpiper.selectedSlice.sliceUUID = Guid.NewGuid().ToString("D");
+                    sandpiper.selectedSlice.slice_description = f.sliceDescription;
+                    sandpiper.selectedSlice.slice_type = f.sliceType;
+                    sandpiper.selectedSlice.slice_meta_data = f.sliceMetadata;
+                    sandpiper.selectedSlice.slice_uuid = Guid.NewGuid().ToString("D");
                 };
                 f.ShowDialog(this);
 
@@ -988,7 +988,7 @@ namespace SandpiperInspector
                     bool success = await sandpiper.postSliceAsync(textBoxServerBaseURL.Text + "/v1/slices", sandpiper.sessionJTW, sandpiper.selectedSlice);
                     if (success)
                     {
-                        sandpiper.historyRecords.Add("creating new slice (" + sandpiper.selectedSlice.sliceUUID + ") named:" + sandpiper.selectedSlice.sliceDescription);
+                        sandpiper.historyRecords.Add("creating new slice (" + sandpiper.selectedSlice.slice_uuid + ") named:" + sandpiper.selectedSlice.slice_description);
                     }
                     else
                     {
@@ -1019,23 +1019,23 @@ namespace SandpiperInspector
                 f.createButtonClick += (mysender, mye) =>
                 {
 
-                    sandpiper.selectedSlice.sliceDescription= f.sliceDescription;
-                    sandpiper.selectedSlice.sliceType = f.sliceType;
-                    sandpiper.selectedSlice.sliceMetadata = f.sliceMetadata;
-                    sandpiper.selectedSlice.sliceUUID = Guid.NewGuid().ToString("D");
+                    sandpiper.selectedSlice.slice_description= f.sliceDescription;
+                    sandpiper.selectedSlice.slice_type = f.sliceType;
+                    sandpiper.selectedSlice.slice_meta_data = f.sliceMetadata;
+                    sandpiper.selectedSlice.slice_uuid = Guid.NewGuid().ToString("D");
                 };
                 f.ShowDialog(this);
 
                 if (f.DialogResult == DialogResult.OK)
                 {
                     sandpiperClient.slice newSlice = new sandpiperClient.slice();
-                    newSlice.sliceUUID = sandpiper.selectedSlice.sliceUUID;
-                    newSlice.sliceType = sandpiper.selectedSlice.sliceType;
-                    newSlice.sliceDescription = sandpiper.selectedSlice.sliceDescription;
-                    newSlice.sliceMetadata = sandpiper.selectedSlice.sliceMetadata;
+                    newSlice.slice_uuid = sandpiper.selectedSlice.slice_uuid;
+                    newSlice.slice_type = sandpiper.selectedSlice.slice_type;
+                    newSlice.slice_description = sandpiper.selectedSlice.slice_description;
+                    newSlice.slice_meta_data = sandpiper.selectedSlice.slice_meta_data;
                     //sandpiper.localSlices.Add(newSlice);
                     //sandpiper.writeFullCacheIndex(lblLocalCacheDir.Text);
-                    sandpiper.historyRecords.Add("New local slice (" + newSlice.sliceUUID + ") created");
+                    sandpiper.historyRecords.Add("New local slice (" + newSlice.slice_uuid + ") created");
                     updateLocalContentTree();
                 }
             }
@@ -1070,17 +1070,17 @@ namespace SandpiperInspector
                 string[] chunks = e.Node.Name.Split('_');
                 if (sandpiper.looksLikeAUUID(chunks[1]))
                 {
-                    sandpiper.selectedSlice.sliceUUID = chunks[1];
+                    sandpiper.selectedSlice.slice_uuid = chunks[1];
 
                     List<sandpiperClient.slice> localSlices = sandpiper.getLocalSlices();
 
                     foreach (sandpiperClient.slice s in localSlices)
                     {
-                        if (s.sliceUUID == sandpiper.selectedSlice.sliceUUID)
+                        if (s.slice_uuid == sandpiper.selectedSlice.slice_uuid)
                         {
-                            sandpiper.selectedSlice.sliceDescription= s.sliceDescription;
-                            sandpiper.selectedSlice.sliceType = s.sliceType;
-                            sandpiper.selectedSlice.sliceMetadata = s.sliceMetadata;
+                            sandpiper.selectedSlice.slice_description= s.slice_description;
+                            sandpiper.selectedSlice.slice_type = s.slice_type;
+                            sandpiper.selectedSlice.slice_meta_data = s.slice_meta_data;
                             break;
                         }
                     }
@@ -1096,7 +1096,7 @@ namespace SandpiperInspector
                 {
                     buttonExportSlice.Enabled = true;
                     sandpiper.selectedGrain = sandpiper.getLocalGrain(chunks[1],true);
-                    if (sandpiper.selectedGrain.payloadLen < 50000)
+                    if (sandpiper.selectedGrain.payload_len < 50000)
                     {
                         textBoxSelectedGrain.Text = sandpiper.selectedGrain.payload;
                     }
@@ -1115,26 +1115,26 @@ namespace SandpiperInspector
             {
                 bool updateIndex = false;
 
-                f.titleText = "Edit local slice " + sandpiper.selectedSlice.sliceUUID;
+                f.titleText = "Edit local slice " + sandpiper.selectedSlice.slice_uuid;
                 f.goButttonText = "Save";
 
-                f.sliceDescription = sandpiper.selectedSlice.sliceDescription;
-                f.sliceType = sandpiper.selectedSlice.sliceType;
-                f.sliceMetadata = sandpiper.selectedSlice.sliceMetadata;
+                f.sliceDescription = sandpiper.selectedSlice.slice_description;
+                f.sliceType = sandpiper.selectedSlice.slice_type;
+                f.sliceMetadata = sandpiper.selectedSlice.slice_meta_data;
 
                 f.createButtonClick += (mysender, mye) =>
                 {
 
-                    sandpiper.selectedSlice.sliceDescription = f.sliceDescription;
-                    sandpiper.selectedSlice.sliceType = f.sliceType;
-                    sandpiper.selectedSlice.sliceMetadata = f.sliceMetadata;
+                    sandpiper.selectedSlice.slice_description = f.sliceDescription;
+                    sandpiper.selectedSlice.slice_type = f.sliceType;
+                    sandpiper.selectedSlice.slice_meta_data = f.sliceMetadata;
                 };
                 f.ShowDialog(this);
 
                 if (f.DialogResult == DialogResult.OK)
                 {
                     sandpiper.addLocalSlice(sandpiper.selectedSlice);
-                    sandpiper.historyRecords.Add("Local slice (" + sandpiper.selectedSlice.sliceUUID + ") edited");
+                    sandpiper.historyRecords.Add("Local slice (" + sandpiper.selectedSlice.slice_uuid + ") edited");
                     updateLocalContentTree();
                 }
             }
@@ -1146,14 +1146,14 @@ namespace SandpiperInspector
 
         private void buttonDeleteLocalSlice_Click(object sender, EventArgs e)
         {
-            string message = "You are about to delete local slice ("+sandpiper.selectedSlice.sliceDescription+") and all of its grains. Are you sure?";
+            string message = "You are about to delete local slice ("+sandpiper.selectedSlice.slice_description+") and all of its grains. Are you sure?";
             MessageBoxButtons buttons = MessageBoxButtons.YesNo;
             DialogResult result = MessageBox.Show(message, "Delete Slice", buttons);
 
             if (result == DialogResult.Yes)
             {
-                sandpiper.dropLocalSlice(sandpiper.selectedSlice.sliceUUID);
-                sandpiper.logActivity("", sandpiper.selectedSlice.sliceUUID, "", "Slice deleted by local local UI");
+                sandpiper.dropLocalSlice(sandpiper.selectedSlice.slice_uuid);
+                sandpiper.logActivity("", sandpiper.selectedSlice.slice_uuid, "", "Slice deleted by local local UI");
                 updateLocalContentTree();
             }
         }
@@ -1216,12 +1216,12 @@ namespace SandpiperInspector
         }
 
 
-        private List<string> getResourceFileLineStrings(string filename)
+        private List<string> getResourceFileLineStrings(string file_name)
         {
             List<string> fileLines = new List<string>();
             try
             {
-                using (var file = GetResourceStream(filename))
+                using (var file = GetResourceStream(file_name))
                 {
                     using (StreamReader reader = new StreamReader(file))
                     {
@@ -1234,7 +1234,7 @@ namespace SandpiperInspector
             }
             catch(Exception ex)
             {
-                sandpiper.historyRecords.Add("error reading project resource file (" + filename + ") :"+ex.Message);
+                sandpiper.historyRecords.Add("error reading project resource file (" + file_name + ") :"+ex.Message);
             }
             return fileLines;
         }
