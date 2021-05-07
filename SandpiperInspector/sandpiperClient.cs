@@ -179,7 +179,7 @@ namespace SandpiperInspector
             public string slice_id;
             public string slice_type;
             public string name;
-            public string slice_meta_data;
+            public string slicemetadata;
             public string hash;
         }
 
@@ -525,19 +525,19 @@ namespace SandpiperInspector
             }
 
             //--- temporary hack to account for the naming difference between old and new slice naming convention-------
-
+            
             foreach (altSlice alts in altSlices)
             {
                 slice s = new slice();
                 s.slice_uuid = alts.slice_id;
                 s.slice_description = alts.name;
                 s.slice_type = alts.slice_type;
-                s.slice_meta_data = alts.slice_meta_data;
+                s.slice_meta_data = alts.slicemetadata;
                 s.slice_grainlist_hash = alts.hash;
                 slices.Add(s);            
             }
             //----------------------------
-
+            
 
             return slices;
         }
