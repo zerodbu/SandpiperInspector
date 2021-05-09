@@ -244,10 +244,9 @@ namespace SandpiperInspector
                         loginResponse r = new loginResponse();
                         r = serializer.Deserialize<loginResponse>(responseString);
 
-                        sessionJTW.token = r.token;
-
-                        if (r.token != null)
+                        if (r != null)
                         {
+                            sessionJTW.token = r.token;
                             string[] chunks = sessionJTW.token.Split('.');
                             if (chunks.Count() == 3)
                             {
@@ -1759,17 +1758,17 @@ namespace SandpiperInspector
         public void cleanupDatabase()
         {
 
-            /*
+            
             using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
             {
                 try
                 {
-                    sqlite_cmd.CommandText = "DELETE from slice_grain where slice_grain.id in (select slice_grain.id from slice_grain LEFT JOIN slice on slice_grain.sliceid=slice.sliceid where slice.sliceid is null);";
+                    sqlite_cmd.CommandText = "DELETE from slice_grains where slice_grains.slice_grain_id in (select slice_grains.slice_grain_id from slice_grains LEFT JOIN slices on slice_grains.slice_uuid=slices.slice_uuid where slices.slice_uuid is null);";
                     sqlite_cmd.ExecuteNonQuery();
                 }
                 catch (Exception ex)
                 {
-                    historyRecords.Add("cleanupDatabase() - failed deleting orphan slice_grain records (joining slice): " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                    historyRecords.Add("cleanupDatabase() - failed deleting orphan slice_grains records (joining slices): " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
                 }
             }
 
@@ -1777,12 +1776,12 @@ namespace SandpiperInspector
             {
                 try
                 {
-                    sqlite_cmd.CommandText = "DELETE from slice_grain where slice_grain.id in (select slice_grain.id from slice_grain LEFT JOIN grain on slice_grain.grainid = grain.grainid where grain.id is null);";
+                    sqlite_cmd.CommandText = "DELETE from slice_grains where slice_grains.slice_grain_id in (select slice_grains.slice_grain_id from slice_grains LEFT JOIN grains on slice_grains.grain_uuid = grains.grain_uuid where grains.grain_uuid is null);";
                     sqlite_cmd.ExecuteNonQuery();
                 }
                 catch (Exception ex)
                 {
-                    historyRecords.Add("cleanupDatabase() - failed deleting orphan slice_grain records (joining grain): " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
+                    historyRecords.Add("cleanupDatabase() - failed deleting orphan slice_grains records (joining grains): " + ex.Message + "(" + sqlite_cmd.CommandText + ")");
                 }
             }
 
@@ -1790,7 +1789,7 @@ namespace SandpiperInspector
             {
                 try
                 {
-                    sqlite_cmd.CommandText = "DELETE from grain where grain.grainid in (select grain.grainid from grain LEFT JOIN slice_grain on grain.grainid = slice_grain.grainid where slice_grain.id is null);";
+                    sqlite_cmd.CommandText = "DELETE from grains where grains.grain_uuid in (select grains.grain_uuid from grains LEFT JOIN slice_grains on grains.grain_uuid = slice_grains.grain_uuid where slice_grains.slice_grain_id is null);";
                     sqlite_cmd.ExecuteNonQuery();
                 }
                 catch (Exception ex)
@@ -1799,7 +1798,7 @@ namespace SandpiperInspector
                 }
             }
 
-            */
+            
 
         }
 
