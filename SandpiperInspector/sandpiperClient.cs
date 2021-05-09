@@ -1803,6 +1803,101 @@ namespace SandpiperInspector
         }
 
 
+        public bool storeLocalEnvironmentVariable(string name, string value)
+        {
+            bool returnVal = false;
+            bool foundRecord = false;
+            int recordID = -1;
+            if (SQliteDatabaseInitialized)
+            {
+                try
+                {
+                    using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                    {
+                        sqlite_cmd.CommandText = "SELECT local_environment_variable_id FROM local_environment_variables where variable_name='" + name + "'";
+
+                        using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                        {
+                            while (sqlite_datareader.Read())
+                            {
+                                recordID = sqlite_datareader.GetInt32(0);
+                                foundRecord = true;
+                            }
+                        }
+                    }
+
+                    using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                    {
+                        if (foundRecord)
+                        {// record exists - need to update it 
+                            sqlite_cmd.CommandText = "UPDATE local_environment_variables set variable_value='" + value + "', created_on=DATETIME('now') WHERE local_environment_variable_id =" + recordID.ToString();
+                        }
+                        else
+                        {// record does not exist - need to insert it
+                            sqlite_cmd.CommandText = "INSERT INTO local_environment_variables (variable_name,variable_value) values('" + name + "','" + value + "');";
+                        }
+                        sqlite_cmd.ExecuteNonQuery();
+                        returnVal = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("storeLocalEnvironmentVariable('" + name+"','"+value+"') - failed: " + ex.Message);
+                }
+            }
+            return returnVal;
+        }
+
+
+
+        public string getLocalEnvironmentVariable(string name, bool createIfMssing = false, string valueIfMissing = "")
+        {
+            string returnVal = "";
+            bool foundRecord = false;
+            if (SQliteDatabaseInitialized)
+            {
+                try
+                {
+                    using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                    {
+                        sqlite_cmd.CommandText = "SELECT variable_value FROM local_environment_variables where variable_name='" + name + "'";
+
+                        using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                        {
+                            while (sqlite_datareader.Read())
+                            {
+                                returnVal = sqlite_datareader.GetString(0);
+                                foundRecord = true;
+                            }
+                        }
+                    }
+
+                    if (!foundRecord && createIfMssing)
+                    {// record does not exist and we need to create it
+
+                        using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                        {
+                            sqlite_cmd.CommandText = "INSERT INTO local_environment_variables (variable_name,variable_value) values('" + name + "','" + valueIfMissing + "');";
+                            sqlite_cmd.ExecuteNonQuery();
+                            returnVal = valueIfMissing;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    historyRecords.Add("getLocalEnvironmentVariable('" + name + "') - failed: " + ex.Message);
+                }
+            }
+            return returnVal;
+        }
+
+
+
+
+
+
+
+
 
     }
 }
