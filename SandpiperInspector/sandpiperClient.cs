@@ -1814,7 +1814,8 @@ namespace SandpiperInspector
                 {
                     using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                     {
-                        sqlite_cmd.CommandText = "SELECT local_environment_variable_id FROM local_environment_variables where variable_name='" + name + "'";
+                        sqlite_cmd.CommandText = "SELECT local_environment_variable_id FROM local_environment_variables where variable_name=@param1";
+                        sqlite_cmd.Parameters.Add(new SQLiteParameter("@param1", name));
 
                         using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                         {
@@ -1830,11 +1831,15 @@ namespace SandpiperInspector
                     {
                         if (foundRecord)
                         {// record exists - need to update it 
-                            sqlite_cmd.CommandText = "UPDATE local_environment_variables set variable_value='" + value + "', created_on=DATETIME('now') WHERE local_environment_variable_id =" + recordID.ToString();
+                            sqlite_cmd.CommandText = "UPDATE local_environment_variables set variable_value=@param1, created_on=DATETIME('now') WHERE local_environment_variable_id =@param2";
+                            sqlite_cmd.Parameters.Add(new SQLiteParameter("@param1", value));
+                            sqlite_cmd.Parameters.Add(new SQLiteParameter("@param2", recordID));
                         }
                         else
                         {// record does not exist - need to insert it
-                            sqlite_cmd.CommandText = "INSERT INTO local_environment_variables (variable_name,variable_value) values('" + name + "','" + value + "');";
+                            sqlite_cmd.CommandText = "INSERT INTO local_environment_variables (variable_name,variable_value) values(@param1,'@param2);";
+                            sqlite_cmd.Parameters.Add(new SQLiteParameter("@param1", name));
+                            sqlite_cmd.Parameters.Add(new SQLiteParameter("@param2", value));
                         }
                         sqlite_cmd.ExecuteNonQuery();
                         returnVal = true;
@@ -1860,7 +1865,8 @@ namespace SandpiperInspector
                 {
                     using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                     {
-                        sqlite_cmd.CommandText = "SELECT variable_value FROM local_environment_variables where variable_name='" + name + "'";
+                        sqlite_cmd.CommandText = "SELECT variable_value FROM local_environment_variables where variable_name=@param1";
+                        sqlite_cmd.Parameters.Add(new SQLiteParameter("@param1", name));
 
                         using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
                         {
@@ -1877,7 +1883,9 @@ namespace SandpiperInspector
 
                         using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
                         {
-                            sqlite_cmd.CommandText = "INSERT INTO local_environment_variables (variable_name,variable_value) values('" + name + "','" + valueIfMissing + "');";
+                            sqlite_cmd.CommandText = "INSERT INTO local_environment_variables (variable_name,variable_value) values(@param1,@param2);";
+                            sqlite_cmd.Parameters.Add(new SQLiteParameter("@param1", name));
+                            sqlite_cmd.Parameters.Add(new SQLiteParameter("@param2", valueIfMissing));
                             sqlite_cmd.ExecuteNonQuery();
                             returnVal = valueIfMissing;
                         }
