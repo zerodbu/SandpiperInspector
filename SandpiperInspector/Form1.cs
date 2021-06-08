@@ -60,6 +60,8 @@ namespace SandpiperInspector
 
             if (key.GetValue("username") != null) { textBoxUsername.Text = key.GetValue("username").ToString(); }
             if (key.GetValue("password") != null) { textBoxPassword.Text = key.GetValue("password").ToString(); }
+
+
             if (key.GetValue("plandocument") != null) { textBoxPlandocument.Text = key.GetValue("plandocument").ToString(); }
 
             if (key.GetValue("plandocumentschema") != null)
@@ -473,9 +475,10 @@ namespace SandpiperInspector
                     sandpiper.responseTime = 0;
                     sandpiper.awaitingServerResponse = true;
                     List<sandpiperClient.grain> grainsInRemoteSlice = new List<sandpiperClient.grain>();
-                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/slices/" + tempSliceList.First().slice_uuid + "/grains" + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
 
-                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
+                    //                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
+                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/slices/" + tempSliceList.First().slice_uuid + "/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
 
                     // grainlist in hand is the remote primary's authoritative list of grains in the current slice
                     // determine the diffs list that need adding and dropping by comparing it to the local grainlist for the given slice
@@ -525,11 +528,11 @@ namespace SandpiperInspector
                     sandpiper.responseTime = 0;
                     sandpiper.awaitingServerResponse = true;
 
-                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
+                    if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/slices/" + sandpiper.grainsToTransfer.First().slice_uuid + "/grains/" + sandpiper.grainsToTransfer.First().grain_uuid + ")"); }
 
                     List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
                         
-                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/" + sandpiper.grainsToTransfer.First().grain_uuid + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
+                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/slices/" + sandpiper.grainsToTransfer.First().slice_uuid + "/grains/" + sandpiper.grainsToTransfer.First().grain_uuid + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
                     //should have gotten a single grain (one element in the returned list)
 
                     sandpiper.awaitingServerResponse = false;
@@ -537,14 +540,14 @@ namespace SandpiperInspector
                     if (grains.Count() == 1)
                     {// we got (and were expecting) a single grain in the response 
 
-                        sandpiper.historyRecords.Add("Downloaded grain:"+grains[0].source + "  in slice:"+grains[0].slice_uuid+ " - transfer took "+ (sandpiper.responseTime*10).ToString()+"mS");
+                        sandpiper.historyRecords.Add("Downloaded grain:"+grains[0].grain_uuid + "  in slice:"+grains[0].slice_uuid+ " - transfer took "+ (sandpiper.responseTime*10).ToString()+"mS");
                         // save grain locally and update indexes
                         // when slice index is updated, use the slice hahses that were given at the begining of the transaction - because that was the point in time when we determined the grains diffs list and started downloading.
                         //  getting the hitlist of grains could take a long time, and it's possible that the primary's state has changed since then.
 
 
                         sandpiper.addLocalGrain(grains[0]);
-                        sandpiper.logActivity(grains[0].grain_uuid, grains[0].slice_uuid, "",  "grain (" + grains[0].description + ") added to local pool");
+                        sandpiper.logActivity(grains[0].grain_uuid, grains[0].slice_uuid, "",  "grain (" + grains[0].grain_uuid + ") added to local pool");
                        
                         sandpiper.grainsToTransfer.RemoveAt(0); // remove the gotten grain from the hitlist
                         if (sandpiper.grainsToTransfer.Count() > 0)

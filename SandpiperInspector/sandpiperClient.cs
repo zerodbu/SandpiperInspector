@@ -299,15 +299,9 @@ namespace SandpiperInspector
         public async Task<List<grain>> getGrainsAsync(string path, JWT jwt)
         {
 
-            List<altGrain> altGrainsList = new List<altGrain>();
             grainsEnvelope responseData = new grainsEnvelope();
-
-            altGrainsEnvelope altResponseData = new altGrainsEnvelope();
-            altGrain myAltGrain = new altGrain();
-
-            altResponseData.grains = altGrainsList;
-
             List<grain> grainsList = new List<grain>();
+
             responseData.grains = grainsList;
 
 
@@ -335,16 +329,8 @@ namespace SandpiperInspector
                     if (recordTranscript){transcriptRecords.Add(FormatJson(responseString));}
 
                     try
-                    {
-                        if (responseString.Substring(0, 13).Contains("\"grains\""))
-                        {// json scructure includes a wrapper evelope 
-                            altResponseData = serializer.Deserialize<altGrainsEnvelope>(responseString);
-                        }
-                        else
-                        {
-                            myAltGrain = serializer.Deserialize<altGrain>(responseString);
-                            altResponseData.grains.Add(myAltGrain);
-                        }
+                    { // json scructure includes a wrapper evelope 
+                        responseData = serializer.Deserialize<grainsEnvelope>(responseString);
                     }
                     catch (Exception ex)
                     {// error parsing json 
@@ -360,24 +346,6 @@ namespace SandpiperInspector
             {
                 historyRecords.Add("Grains error - " + ex.Message);
             }
-
-
-            foreach (altGrain ag in altResponseData.grains)
-            {
-                grain g = new grain();
-                g.description = ag.description;
-                g.encoding = ag.encoding;
-                g.grain_key = ag.grain_key;
-                g.localfile_name = "";
-                g.payload = ag.payload;
-                g.payload_len = ag.payload_len;
-                g.slice_uuid = ag.slice_id;
-                g.source = ag.source;
-                g.grain_reference = ag.source;
-                g.grain_uuid = ag.id;
-                responseData.grains.Add(g);
-            }
-
 
             return responseData.grains;
         }
@@ -489,7 +457,6 @@ namespace SandpiperInspector
 
         public async Task<List<slice>> getSlicesAsync(string path, JWT jwt)
         {
-            List<altSlice> altSlices = new List<altSlice>();
             List<slice> slices = new List<slice>();
 
             try
@@ -510,7 +477,7 @@ namespace SandpiperInspector
                     string responseString = await response.Content.ReadAsStringAsync();
                     if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
-                    altSlices = serializer.Deserialize<List<altSlice>>(responseString);
+                    slices = serializer.Deserialize<List<slice>>(responseString);
 
                 }
                 else
@@ -522,21 +489,6 @@ namespace SandpiperInspector
             {
                 historyRecords.Add("Slices error - " + ex.Message);
             }
-
-            //--- temporary hack to account for the naming difference between old and new slice naming convention-------
-            
-            foreach (altSlice alts in altSlices)
-            {
-                slice s = new slice();
-                s.slice_uuid = alts.slice_id;
-                s.slice_description = alts.name;
-                s.slice_type = alts.slice_type;
-                s.slice_meta_data = alts.slicemetadata;
-                s.slice_grainlist_hash = alts.hash;
-                slices.Add(s);            
-            }
-            //----------------------------
-            
 
             return slices;
         }
