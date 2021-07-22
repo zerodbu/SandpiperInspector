@@ -47,6 +47,11 @@
             this.buttonSelectCacheDir = new System.Windows.Forms.Button();
             this.tabPageHistory = new System.Windows.Forms.TabPage();
             this.textBoxHistory = new System.Windows.Forms.TextBox();
+            this.tabPagePlans = new System.Windows.Forms.TabPage();
+            this.textBoxPlanDetails = new System.Windows.Forms.TextBox();
+            this.buttonPlansDelete = new System.Windows.Forms.Button();
+            this.buttonPlansNew = new System.Windows.Forms.Button();
+            this.treeViewPlans = new System.Windows.Forms.TreeView();
             this.tabPageLocalConntent = new System.Windows.Forms.TabPage();
             this.textBoxSelectedGrain = new System.Windows.Forms.TextBox();
             this.buttonExportSlice = new System.Windows.Forms.Button();
@@ -60,33 +65,28 @@
             this.buttonNewRemoteSlice = new System.Windows.Forms.Button();
             this.treeViewRemoteContent = new System.Windows.Forms.TreeView();
             this.lblStatus = new System.Windows.Forms.Label();
-            this.textBoxPlandocument = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.pictureBoxStatus = new System.Windows.Forms.PictureBox();
             this.timerHousekeeping = new System.Windows.Forms.Timer(this.components);
-            this.buttonValidatePlan = new System.Windows.Forms.Button();
-            this.groupBoxRole = new System.Windows.Forms.GroupBox();
-            this.radioButtonRoleSecondary = new System.Windows.Forms.RadioButton();
-            this.radioButtonRolePrimary = new System.Windows.Forms.RadioButton();
-            this.lblNodeID = new System.Windows.Forms.Label();
-            this.textBoxNodeID = new System.Windows.Forms.TextBox();
             this.timerLocalFilesIndexer = new System.Windows.Forms.Timer(this.components);
             this.timerTransscriptRefresh = new System.Windows.Forms.Timer(this.components);
+            this.textBoxAuthPlanDescription = new System.Windows.Forms.TextBox();
+            this.listBoxAuthPlans = new System.Windows.Forms.ListBox();
             this.tabControl1.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
             this.tabPageHistory.SuspendLayout();
+            this.tabPagePlans.SuspendLayout();
             this.tabPageLocalConntent.SuspendLayout();
             this.tabPageTranscript.SuspendLayout();
             this.tabPageRemoteContent.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStatus)).BeginInit();
-            this.groupBoxRole.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnAuthenticate
             // 
-            this.btnAuthenticate.Location = new System.Drawing.Point(441, 140);
+            this.btnAuthenticate.Location = new System.Drawing.Point(136, 167);
             this.btnAuthenticate.Name = "btnAuthenticate";
-            this.btnAuthenticate.Size = new System.Drawing.Size(105, 35);
+            this.btnAuthenticate.Size = new System.Drawing.Size(270, 27);
             this.btnAuthenticate.TabIndex = 0;
             this.btnAuthenticate.Text = "Authenticate";
             this.btnAuthenticate.UseVisualStyleBackColor = true;
@@ -102,7 +102,7 @@
             // 
             // textBoxUsername
             // 
-            this.textBoxUsername.Location = new System.Drawing.Point(136, 40);
+            this.textBoxUsername.Location = new System.Drawing.Point(136, 43);
             this.textBoxUsername.Name = "textBoxUsername";
             this.textBoxUsername.Size = new System.Drawing.Size(156, 22);
             this.textBoxUsername.TabIndex = 2;
@@ -110,7 +110,7 @@
             // 
             // textBoxPassword
             // 
-            this.textBoxPassword.Location = new System.Drawing.Point(390, 40);
+            this.textBoxPassword.Location = new System.Drawing.Point(390, 43);
             this.textBoxPassword.Name = "textBoxPassword";
             this.textBoxPassword.Size = new System.Drawing.Size(156, 22);
             this.textBoxPassword.TabIndex = 3;
@@ -128,7 +128,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 43);
+            this.label2.Location = new System.Drawing.Point(12, 46);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(73, 17);
             this.label2.TabIndex = 5;
@@ -137,7 +137,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(315, 43);
+            this.label3.Location = new System.Drawing.Point(315, 46);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(69, 17);
             this.label3.TabIndex = 6;
@@ -147,10 +147,11 @@
             // 
             this.tabControl1.Controls.Add(this.tabPageSettings);
             this.tabControl1.Controls.Add(this.tabPageHistory);
+            this.tabControl1.Controls.Add(this.tabPagePlans);
             this.tabControl1.Controls.Add(this.tabPageLocalConntent);
             this.tabControl1.Controls.Add(this.tabPageTranscript);
             this.tabControl1.Controls.Add(this.tabPageRemoteContent);
-            this.tabControl1.Location = new System.Drawing.Point(12, 209);
+            this.tabControl1.Location = new System.Drawing.Point(15, 243);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(534, 230);
@@ -266,6 +267,54 @@
             this.textBoxHistory.Size = new System.Drawing.Size(514, 186);
             this.textBoxHistory.TabIndex = 0;
             this.textBoxHistory.WordWrap = false;
+            // 
+            // tabPagePlans
+            // 
+            this.tabPagePlans.Controls.Add(this.textBoxPlanDetails);
+            this.tabPagePlans.Controls.Add(this.buttonPlansDelete);
+            this.tabPagePlans.Controls.Add(this.buttonPlansNew);
+            this.tabPagePlans.Controls.Add(this.treeViewPlans);
+            this.tabPagePlans.Location = new System.Drawing.Point(4, 25);
+            this.tabPagePlans.Name = "tabPagePlans";
+            this.tabPagePlans.Size = new System.Drawing.Size(526, 201);
+            this.tabPagePlans.TabIndex = 5;
+            this.tabPagePlans.Text = "Plans";
+            this.tabPagePlans.UseVisualStyleBackColor = true;
+            // 
+            // textBoxPlanDetails
+            // 
+            this.textBoxPlanDetails.Location = new System.Drawing.Point(219, 3);
+            this.textBoxPlanDetails.Multiline = true;
+            this.textBoxPlanDetails.Name = "textBoxPlanDetails";
+            this.textBoxPlanDetails.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBoxPlanDetails.Size = new System.Drawing.Size(304, 139);
+            this.textBoxPlanDetails.TabIndex = 3;
+            // 
+            // buttonPlansDelete
+            // 
+            this.buttonPlansDelete.Location = new System.Drawing.Point(448, 148);
+            this.buttonPlansDelete.Name = "buttonPlansDelete";
+            this.buttonPlansDelete.Size = new System.Drawing.Size(75, 27);
+            this.buttonPlansDelete.TabIndex = 2;
+            this.buttonPlansDelete.Text = "Delete";
+            this.buttonPlansDelete.UseVisualStyleBackColor = true;
+            // 
+            // buttonPlansNew
+            // 
+            this.buttonPlansNew.Location = new System.Drawing.Point(367, 148);
+            this.buttonPlansNew.Name = "buttonPlansNew";
+            this.buttonPlansNew.Size = new System.Drawing.Size(75, 27);
+            this.buttonPlansNew.TabIndex = 1;
+            this.buttonPlansNew.Text = "New";
+            this.buttonPlansNew.UseVisualStyleBackColor = true;
+            this.buttonPlansNew.Click += new System.EventHandler(this.buttonPlansNew_Click);
+            // 
+            // treeViewPlans
+            // 
+            this.treeViewPlans.Location = new System.Drawing.Point(3, 3);
+            this.treeViewPlans.Name = "treeViewPlans";
+            this.treeViewPlans.Size = new System.Drawing.Size(210, 139);
+            this.treeViewPlans.TabIndex = 0;
             // 
             // tabPageLocalConntent
             // 
@@ -397,31 +446,20 @@
             // lblStatus
             // 
             this.lblStatus.AutoSize = true;
-            this.lblStatus.Location = new System.Drawing.Point(12, 178);
+            this.lblStatus.Location = new System.Drawing.Point(16, 223);
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(20, 17);
             this.lblStatus.TabIndex = 8;
             this.lblStatus.Text = "...";
             // 
-            // textBoxPlandocument
-            // 
-            this.textBoxPlandocument.Location = new System.Drawing.Point(136, 68);
-            this.textBoxPlandocument.Multiline = true;
-            this.textBoxPlandocument.Name = "textBoxPlandocument";
-            this.textBoxPlandocument.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxPlandocument.Size = new System.Drawing.Size(410, 66);
-            this.textBoxPlandocument.TabIndex = 10;
-            this.textBoxPlandocument.WordWrap = false;
-            this.textBoxPlandocument.Leave += new System.EventHandler(this.textBoxPlandocument_Leave);
-            // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 71);
+            this.label4.Location = new System.Drawing.Point(12, 77);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(104, 17);
+            this.label4.Size = new System.Drawing.Size(36, 17);
             this.label4.TabIndex = 11;
-            this.label4.Text = "Plan Document";
+            this.label4.Text = "Plan";
             // 
             // pictureBoxStatus
             // 
@@ -440,87 +478,40 @@
             this.timerHousekeeping.Interval = 10;
             this.timerHousekeeping.Tick += new System.EventHandler(this.timerHousekeeping_Tick);
             // 
-            // buttonValidatePlan
-            // 
-            this.buttonValidatePlan.Location = new System.Drawing.Point(325, 140);
-            this.buttonValidatePlan.Name = "buttonValidatePlan";
-            this.buttonValidatePlan.Size = new System.Drawing.Size(110, 35);
-            this.buttonValidatePlan.TabIndex = 13;
-            this.buttonValidatePlan.Text = "Validate Plan";
-            this.buttonValidatePlan.UseVisualStyleBackColor = true;
-            this.buttonValidatePlan.Click += new System.EventHandler(this.buttonValidatePlan_Click);
-            // 
-            // groupBoxRole
-            // 
-            this.groupBoxRole.Controls.Add(this.radioButtonRoleSecondary);
-            this.groupBoxRole.Controls.Add(this.radioButtonRolePrimary);
-            this.groupBoxRole.Location = new System.Drawing.Point(9, 102);
-            this.groupBoxRole.Name = "groupBoxRole";
-            this.groupBoxRole.Size = new System.Drawing.Size(121, 73);
-            this.groupBoxRole.TabIndex = 15;
-            this.groupBoxRole.TabStop = false;
-            this.groupBoxRole.Text = "Local Role";
-            // 
-            // radioButtonRoleSecondary
-            // 
-            this.radioButtonRoleSecondary.AutoSize = true;
-            this.radioButtonRoleSecondary.Location = new System.Drawing.Point(5, 48);
-            this.radioButtonRoleSecondary.Name = "radioButtonRoleSecondary";
-            this.radioButtonRoleSecondary.Size = new System.Drawing.Size(97, 21);
-            this.radioButtonRoleSecondary.TabIndex = 1;
-            this.radioButtonRoleSecondary.TabStop = true;
-            this.radioButtonRoleSecondary.Text = "Secondary";
-            this.radioButtonRoleSecondary.UseVisualStyleBackColor = true;
-            this.radioButtonRoleSecondary.CheckedChanged += new System.EventHandler(this.radioButtonRoleSecondary_CheckedChanged);
-            // 
-            // radioButtonRolePrimary
-            // 
-            this.radioButtonRolePrimary.AutoSize = true;
-            this.radioButtonRolePrimary.Location = new System.Drawing.Point(6, 21);
-            this.radioButtonRolePrimary.Name = "radioButtonRolePrimary";
-            this.radioButtonRolePrimary.Size = new System.Drawing.Size(72, 21);
-            this.radioButtonRolePrimary.TabIndex = 0;
-            this.radioButtonRolePrimary.TabStop = true;
-            this.radioButtonRolePrimary.Text = "Pimary";
-            this.radioButtonRolePrimary.UseVisualStyleBackColor = true;
-            this.radioButtonRolePrimary.CheckedChanged += new System.EventHandler(this.radioButtonRolePrimary_CheckedChanged);
-            // 
-            // lblNodeID
-            // 
-            this.lblNodeID.AutoSize = true;
-            this.lblNodeID.Location = new System.Drawing.Point(136, 137);
-            this.lblNodeID.Name = "lblNodeID";
-            this.lblNodeID.Size = new System.Drawing.Size(97, 17);
-            this.lblNodeID.TabIndex = 16;
-            this.lblNodeID.Text = "Local Node ID";
-            // 
-            // textBoxNodeID
-            // 
-            this.textBoxNodeID.Enabled = false;
-            this.textBoxNodeID.Location = new System.Drawing.Point(136, 153);
-            this.textBoxNodeID.Name = "textBoxNodeID";
-            this.textBoxNodeID.Size = new System.Drawing.Size(299, 22);
-            this.textBoxNodeID.TabIndex = 17;
-            this.textBoxNodeID.Leave += new System.EventHandler(this.textBoxNodeID_Leave);
-            // 
             // timerTransscriptRefresh
             // 
             this.timerTransscriptRefresh.Enabled = true;
             this.timerTransscriptRefresh.Interval = 300;
             this.timerTransscriptRefresh.Tick += new System.EventHandler(this.timerTransscriptRefresh_Tick);
             // 
+            // textBoxAuthPlanDescription
+            // 
+            this.textBoxAuthPlanDescription.BackColor = System.Drawing.SystemColors.InactiveCaption;
+            this.textBoxAuthPlanDescription.Location = new System.Drawing.Point(412, 77);
+            this.textBoxAuthPlanDescription.Multiline = true;
+            this.textBoxAuthPlanDescription.Name = "textBoxAuthPlanDescription";
+            this.textBoxAuthPlanDescription.Size = new System.Drawing.Size(133, 117);
+            this.textBoxAuthPlanDescription.TabIndex = 16;
+            // 
+            // listBoxAuthPlans
+            // 
+            this.listBoxAuthPlans.FormattingEnabled = true;
+            this.listBoxAuthPlans.ItemHeight = 16;
+            this.listBoxAuthPlans.Location = new System.Drawing.Point(136, 77);
+            this.listBoxAuthPlans.Name = "listBoxAuthPlans";
+            this.listBoxAuthPlans.Size = new System.Drawing.Size(270, 84);
+            this.listBoxAuthPlans.TabIndex = 17;
+            this.listBoxAuthPlans.SelectedIndexChanged += new System.EventHandler(this.listBoxAuthPlans_SelectedIndexChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(703, 676);
-            this.Controls.Add(this.textBoxNodeID);
-            this.Controls.Add(this.lblNodeID);
-            this.Controls.Add(this.groupBoxRole);
-            this.Controls.Add(this.buttonValidatePlan);
+            this.Controls.Add(this.listBoxAuthPlans);
+            this.Controls.Add(this.textBoxAuthPlanDescription);
             this.Controls.Add(this.pictureBoxStatus);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.textBoxPlandocument);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label3);
@@ -540,14 +531,14 @@
             this.tabPageSettings.PerformLayout();
             this.tabPageHistory.ResumeLayout(false);
             this.tabPageHistory.PerformLayout();
+            this.tabPagePlans.ResumeLayout(false);
+            this.tabPagePlans.PerformLayout();
             this.tabPageLocalConntent.ResumeLayout(false);
             this.tabPageLocalConntent.PerformLayout();
             this.tabPageTranscript.ResumeLayout(false);
             this.tabPageTranscript.PerformLayout();
             this.tabPageRemoteContent.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxStatus)).EndInit();
-            this.groupBoxRole.ResumeLayout(false);
-            this.groupBoxRole.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -568,7 +559,6 @@
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.TextBox textBoxHistory;
         private System.Windows.Forms.TextBox textBoxTranscript;
-        private System.Windows.Forms.TextBox textBoxPlandocument;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TabPage tabPageRemoteContent;
         private System.Windows.Forms.TreeView treeViewRemoteContent;
@@ -578,14 +568,8 @@
         private System.Windows.Forms.Label lblLocalCacheDir;
         private System.Windows.Forms.Button buttonSelectCacheDir;
         private System.Windows.Forms.CheckBox checkBoxAutotest;
-        private System.Windows.Forms.Button buttonValidatePlan;
         private System.Windows.Forms.TextBox textBoxPlanSchema;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.GroupBox groupBoxRole;
-        private System.Windows.Forms.RadioButton radioButtonRoleSecondary;
-        private System.Windows.Forms.RadioButton radioButtonRolePrimary;
-        private System.Windows.Forms.Label lblNodeID;
-        private System.Windows.Forms.TextBox textBoxNodeID;
         private System.Windows.Forms.Label lblResetSchema;
         private System.Windows.Forms.TabPage tabPageLocalConntent;
         private System.Windows.Forms.TreeView treeViewLocalContent;
@@ -598,6 +582,13 @@
         private System.Windows.Forms.CheckBox checkBoxTranscript;
         private System.Windows.Forms.Button buttonExportSlice;
         private System.Windows.Forms.TextBox textBoxSelectedGrain;
+        private System.Windows.Forms.TabPage tabPagePlans;
+        private System.Windows.Forms.Button buttonPlansDelete;
+        private System.Windows.Forms.Button buttonPlansNew;
+        private System.Windows.Forms.TreeView treeViewPlans;
+        private System.Windows.Forms.TextBox textBoxPlanDetails;
+        private System.Windows.Forms.TextBox textBoxAuthPlanDescription;
+        private System.Windows.Forms.ListBox listBoxAuthPlans;
     }
 }
 

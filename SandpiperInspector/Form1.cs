@@ -26,7 +26,7 @@ namespace SandpiperInspector
     {
 
         sandpiperClient sandpiper = new sandpiperClient();
-
+      
         private TabPage hiddenTranscriptTab = new TabPage();
         private TabPage hiddenRemoteContentTab = new TabPage();
         private TabPage hiddenLocalContentTab = new TabPage();
@@ -49,6 +49,7 @@ namespace SandpiperInspector
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            sandpiper.activePlan = new sandpiperClient.plan();
 
             sandpiper.defaultPlandocumentSchema = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:vc=\"http://www.w3.org/2007/XMLSchema-versioning\" vc:minVersion=\"1.1\" elementFormDefault=\"qualified\">\r\n\t<!-- Basic types -->\r\n\t<xs:simpleType name=\"uuid\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:length value=\"36\" fixed=\"true\"/>\r\n\t\t\t<xs:pattern value=\"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Medium\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"String_Short\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"40\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Email\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t\t<xs:pattern value=\"[^\\s]+@[^\\s]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldName\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"63\"/>\r\n\t\t\t<xs:pattern value=\"[A-Za-z][A-Za-z0-9_\\-]+\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"FieldValue\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:minLength value=\"1\"/>\r\n\t\t\t<xs:maxLength value=\"255\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<xs:simpleType name=\"Levels\">\r\n\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t<xs:enumeration value=\"1-1\"/>\r\n\t\t\t<xs:enumeration value=\"1-2\"/>\r\n\t\t\t<xs:enumeration value=\"2\"/>\r\n\t\t\t<xs:enumeration value=\"3\"/>\r\n\t\t</xs:restriction>\r\n\t</xs:simpleType>\r\n\t<!-- Attribute templates used in multiple places -->\r\n\t<xs:attributeGroup name=\"Model\">\r\n\t\t<xs:attribute name=\"uuid\" type=\"uuid\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Main\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"required\"/>\r\n\t</xs:attributeGroup>\r\n\t<xs:attributeGroup name=\"Description_Optional\">\r\n\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t</xs:attributeGroup>\r\n\t<!-- Element templates used in multiple places -->\r\n\t<xs:complexType name=\"LinkGroup\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"UniqueLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"MultiLink\" minOccurs=\"0\" maxOccurs=\"unbounded\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<xs:element name=\"MultLinkEntry\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"keyvalue\" type=\"FieldValue\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"keyfield\" type=\"FieldName\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t</xs:complexType>\r\n\t<xs:complexType name=\"Instance\">\r\n\t\t<xs:sequence>\r\n\t\t\t<xs:element name=\"Software\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t<xs:attribute name=\"version\" type=\"String_Short\" use=\"required\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t\t<xs:element name=\"Capability\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t<!-- If a server is available, it is listed here -->\r\n\t\t\t\t\t\t<xs:element name=\"Response\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"uri\" type=\"xs:string\" use=\"required\"/>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"role\">\r\n\t\t\t\t\t\t\t\t\t<xs:simpleType>\r\n\t\t\t\t\t\t\t\t\t\t<xs:restriction base=\"xs:string\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Synchronization\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:enumeration value=\"Authentication\"/>\r\n\t\t\t\t\t\t\t\t\t\t</xs:restriction>\r\n\t\t\t\t\t\t\t\t\t</xs:simpleType>\r\n\t\t\t\t\t\t\t\t</xs:attribute>\r\n\t\t\t\t\t\t\t\t<xs:attribute name=\"description\" type=\"String_Medium\" use=\"optional\"/>\r\n\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t<xs:attribute name=\"level\" type=\"Levels\"/>\r\n\t\t\t\t</xs:complexType>\r\n\t\t\t</xs:element>\r\n\t\t</xs:sequence>\r\n\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t</xs:complexType>\r\n\t<!-- Main schema -->\r\n\t<xs:element name=\"Plan\">\r\n\t\t<xs:complexType>\r\n\t\t\t<xs:sequence>\r\n\t\t\t\t<xs:element name=\"Primary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Controller\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Admin\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"contact\" type=\"String_Medium\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"email\" type=\"Email\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t<xs:element name=\"Pools\" maxOccurs=\"1\" minOccurs=\"0\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Pool\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"PrimaryPoolLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slices\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Slice\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:unique name=\"SliceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Description_Main\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Communal\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Subscriptions\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t<xs:element name=\"Subscription\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<!-- Not part of Sandpiper 1.0 - future use -->\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfiles\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:element name=\"DeliveryProfile\" minOccurs=\"1\" maxOccurs=\"unbounded\">\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t\t<xs:attribute name=\"slice_uuid\" type=\"uuid\"/>\r\n\t\t\t\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t\t<xs:element name=\"Secondary\" minOccurs=\"1\" maxOccurs=\"1\">\r\n\t\t\t\t\t<xs:complexType>\r\n\t\t\t\t\t\t<xs:sequence>\r\n\t\t\t\t\t\t\t<xs:element name=\"Instance\" type=\"Instance\" minOccurs=\"1\" maxOccurs=\"1\"/>\r\n\t\t\t\t\t\t\t<xs:element name=\"Links\" type=\"LinkGroup\" minOccurs=\"0\" maxOccurs=\"1\">\r\n\t\t\t\t\t\t\t\t<xs:unique name=\"SecondaryInstanceLinkUniqueKeyField\">\r\n\t\t\t\t\t\t\t\t\t<xs:selector xpath=\"MultiLink|UniqueLink\"/>\r\n\t\t\t\t\t\t\t\t\t<xs:field xpath=\"@keyfield\"/>\r\n\t\t\t\t\t\t\t\t</xs:unique>\r\n\t\t\t\t\t\t\t</xs:element>\r\n\t\t\t\t\t\t</xs:sequence>\r\n\t\t\t\t\t\t<xs:attributeGroup ref=\"Model\"/>\r\n\t\t\t\t\t</xs:complexType>\r\n\t\t\t\t</xs:element>\r\n\t\t\t</xs:sequence>\r\n\t\t\t<xs:attribute name=\"uuid\" type=\"uuid\"/>\r\n\t\t</xs:complexType>\r\n\t</xs:element>\r\n</xs:schema>";
             sandpiper.SQliteDatabaseInitialized = false;
@@ -62,7 +63,6 @@ namespace SandpiperInspector
             if (key.GetValue("password") != null) { textBoxPassword.Text = key.GetValue("password").ToString(); }
 
 
-            if (key.GetValue("plandocument") != null) { textBoxPlandocument.Text = key.GetValue("plandocument").ToString(); }
 
             if (key.GetValue("plandocumentschema") != null)
             {// registry entry already exists for plandoc schema - use it to fill the UI text box
@@ -77,21 +77,6 @@ namespace SandpiperInspector
             }
 
 
-            if (key.GetValue("role") != null)
-            {// registry key exists for role
-                if (Convert.ToInt32(key.GetValue("role")) == 0)
-                {// registry key states that i'm primary
-                    radioButtonRolePrimary.Checked = true;
-                }
-                else
-                {// registry key states that i'm secondary
-                    radioButtonRoleSecondary.Checked = true;
-                }
-            }
-            else
-            {
-                radioButtonRoleSecondary.Checked = true;
-            }
 
 
 
@@ -109,8 +94,8 @@ namespace SandpiperInspector
 
 
             // hiddenHistoryTab = tabControl1.TabPages[1];
-            hiddenTranscriptTab = tabControl1.TabPages[3];
-            hiddenRemoteContentTab = tabControl1.TabPages[4];
+            hiddenTranscriptTab = tabControl1.TabPages[4];
+            hiddenRemoteContentTab = tabControl1.TabPages[5];
 
             tabControl1.TabPages.RemoveByKey("tabPageTranscript"); // hide the JWT tab
             tabControl1.TabPages.RemoveByKey("tabPageRemoteContent"); // hide the subscribedSlices tab
@@ -164,9 +149,10 @@ namespace SandpiperInspector
                     sandpiper.refreshAllLocalSliceHashes();
                     sandpiper.logActivity("", "", "", "program startup");
 
-                    //readCacheIndex(lblLocalCacheDir.Text);
-                    //indexLocalFiles(lblLocalCacheDir.Text);
+                    sandpiper.localPlans = sandpiper.getLocalPlans();
+
                     updateLocalContentTree();
+                    updateUIplanList();
 
 
                     fwatcher.Path = lblLocalCacheDir.Text;
@@ -196,13 +182,11 @@ namespace SandpiperInspector
             sandpiper.responseTime = 0;
 
             textBoxServerBaseURL.Enabled = false;
-            groupBoxRole.Enabled = false;
             textBoxPassword.Enabled = false;
             textBoxUsername.Enabled = false;
-            textBoxPlandocument.Enabled = false;
 
             if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("loginAsync(" + textBoxServerBaseURL.Text + "/login)"); }
-            bool loginSuccess = await sandpiper.loginAsync(textBoxServerBaseURL.Text + "/login", textBoxUsername.Text, textBoxPassword.Text, textBoxPlandocument.Text);
+            bool loginSuccess = await sandpiper.loginAsync(textBoxServerBaseURL.Text + "/login", textBoxUsername.Text, textBoxPassword.Text, sandpiper.activePlan.plandocument_xml);
 
             if (loginSuccess)
             {
@@ -211,10 +195,8 @@ namespace SandpiperInspector
             else
             {// failed login 
                 textBoxServerBaseURL.Enabled = true;
-                groupBoxRole.Enabled = true;
                 textBoxPassword.Enabled = true;
                 textBoxUsername.Enabled = true;
-                textBoxPlandocument.Enabled = true;
             }
         }
 
@@ -269,21 +251,32 @@ namespace SandpiperInspector
 
 
                 case (int)sandpiperClient.interactionStates.AUTHENTICATED:
-
-                    sandpiper.historyRecords.Add("Refreshing grainlist hashes on all slices in local pool");
-                    sandpiper.refreshAllLocalSliceHashes();
+                    
 
                     if (checkBoxAutotest.Checked)
                     {
-                        if (sandpiper.myRole == 0)
-                        {// local client is primary
-                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_SLICELIST;
+                        //if we authenticated with a null-plan, we won't ask for content (we would be denied)
+
+                        if (sandpiper.activePlan.plandocument_xml == "")
+                        {// authenticated with a null plan
+
+                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                         }
                         else
-                        {// local client is secondary
+                        {// authenticated with a plan
 
-                            sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_SLICELIST;
+                            if (sandpiper.myRole == 0)
+                            {// local client is primary
+                                sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_SEC_GET_SLICELIST;
+                            }
+                            else
+                            {// local client is secondary
+                                sandpiper.historyRecords.Add("Refreshing grainlist hashes on all slices in local pool");
+                                sandpiper.refreshAllLocalSliceHashes();
+                                sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_SLICELIST;
+                            }
                         }
+
                     }
                     else
                     {
@@ -429,9 +422,9 @@ namespace SandpiperInspector
                     }
 
 
-                    if (sandpiper.slicesToUpdate.Count() > 0)
-                    {
-                        sandpiper.historyRecords.Add("        Remote primary pool contains " + sandpiper.slicesToUpdate.Count().ToString() + " slices that will be updated or created in the local secondary pool");
+                   // if (sandpiper.slicesToUpdate.Count() > 0)
+                   // {
+                   //     sandpiper.historyRecords.Add("        Remote primary pool contains " + sandpiper.slicesToUpdate.Count().ToString() + " slices that will be updated or created in the local secondary pool");
                         // need to do a grain-list comparison for each of the slices found to be out of sync
 
                         sandpiper.grainsToTransfer.Clear();
@@ -440,7 +433,7 @@ namespace SandpiperInspector
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_GET_GRAINLIST;
                         // duplicate the slices to be gotten into a throw-away list to be burned as we iterate through it
                         tempSliceList.Clear();
-                        foreach (sandpiperClient.slice s in sandpiper.slicesToUpdate)
+                        foreach (sandpiperClient.slice s in sandpiper.remoteSlices)
                         {
                             sandpiperClient.slice newSlice = new sandpiperClient.slice();
                             newSlice.slice_uuid = s.slice_uuid; newSlice.pool_uuid = s.pool_uuid; newSlice.slice_description = s.slice_description; newSlice.file_name = s.file_name; newSlice.slice_type = s.slice_type;newSlice.slice_meta_data = s.slice_meta_data; newSlice.slice_order = s.slice_order; newSlice.slice_grainlist_hash = s.slice_grainlist_hash;
@@ -451,12 +444,12 @@ namespace SandpiperInspector
                             sandpiper.logActivity("", newSlice.slice_uuid, "", "slice (" + newSlice.slice_description + ") added to local pool");
                         }
                         localContentTreeIsUpToDate = false;
-                    }
-                    else
-                    {
-                        sandpiper.historyRecords.Add("        All slices in remote primary pool exist in the local secondary pool - nothing to add");
-                        sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
-                    }
+                    //}
+                    //else
+                    //{
+                      //  sandpiper.historyRecords.Add("        All slices in remote primary pool exist in the local secondary pool - nothing to add");
+                        //sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
+                   // }
 
                     break;
 
@@ -477,8 +470,7 @@ namespace SandpiperInspector
                     List<sandpiperClient.grain> grainsInRemoteSlice = new List<sandpiperClient.grain>();
                     if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("getGrainsAsync(" + textBoxServerBaseURL.Text + "/v1/slices/" + tempSliceList.First().slice_uuid + "/grains" + "?detail=GRAIN_WITHOUT_PAYLOAD)"); }
 
-                    //                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/grains/slice/" + tempSliceList.First().slice_uuid + "?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
-                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/slices/" + tempSliceList.First().slice_uuid + "/grains?detail=GRAIN_WITHOUT_PAYLOAD", sandpiper.sessionJTW);
+                    grainsInRemoteSlice = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/slices/" + tempSliceList.First().slice_uuid + "/grains?detail=GRAIN_WITHOUT_PAYLOAD", tempSliceList.First().slice_uuid, sandpiper.sessionJTW);
 
                     // grainlist in hand is the remote primary's authoritative list of grains in the current slice
                     // determine the diffs list that need adding and dropping by comparing it to the local grainlist for the given slice
@@ -532,7 +524,7 @@ namespace SandpiperInspector
 
                     List<sandpiperClient.grain> grains = new List<sandpiperClient.grain>();
                         
-                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/slices/" + sandpiper.grainsToTransfer.First().slice_uuid + "/grains/" + sandpiper.grainsToTransfer.First().grain_uuid + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.sessionJTW);
+                    grains = await sandpiper.getGrainsAsync(textBoxServerBaseURL.Text + "/v1/slices/" + sandpiper.grainsToTransfer.First().slice_uuid + "/grains/" + sandpiper.grainsToTransfer.First().grain_uuid + "?detail=GRAIN_WITH_PAYLOAD", sandpiper.grainsToTransfer.First().slice_uuid, sandpiper.sessionJTW);
                     //should have gotten a single grain (one element in the returned list)
 
                     sandpiper.awaitingServerResponse = false;
@@ -562,7 +554,7 @@ namespace SandpiperInspector
                     }
                     else
                     {// server responded with something other than a single grain list 
-                        sandpiper.historyRecords.Add("server respoded to with "+grains.Count().ToString()+" - we were expecting 1 grain.");
+                        sandpiper.historyRecords.Add("server respoded to /slices/[uuid]/grains with "+grains.Count().ToString() + " grains - we were expecting exactly 1.");
                         sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
                         lblStatus.Text = "";
                     }
@@ -577,6 +569,10 @@ namespace SandpiperInspector
                     break;
 
 
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_PROPOSE_NEW:
+                    sandpiper.responseTime++;
+                    lblStatus.Text = "proposing new plan (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+                    break;
 
 
 
@@ -625,7 +621,7 @@ namespace SandpiperInspector
             RegistryKey key = Registry.CurrentUser.OpenSubKey("Software", true);
             key.CreateSubKey("SandpiperInspector");
             key = key.OpenSubKey("SandpiperInspector", true);
-            key.SetValue("plandocument", textBoxPlandocument.Text);
+            //key.SetValue("plandocument", textBoxPlandocument.Text);
         }
 
         private void textBoxServerBaseURL_Leave(object sender, EventArgs e)
@@ -674,6 +670,7 @@ namespace SandpiperInspector
 
         private void updateRoleDependantUIelements()
         {
+/*
             sandpiper.getNodeIDsFromPlan(textBoxPlandocument.Text);
 
             RegistryKey key = Registry.CurrentUser.OpenSubKey("Software", true);
@@ -692,7 +689,7 @@ namespace SandpiperInspector
                 sandpiper.myRole = 1;
                 textBoxNodeID.Text = sandpiper.secondaryNodeID;
             }
-
+*/
 
         }
 
@@ -712,33 +709,30 @@ namespace SandpiperInspector
         {
             pictureBoxStatus.Left = this.Width - 40;
             textBoxServerBaseURL.Width = this.Width - 150;
-            textBoxPlandocument.Width = this.Width - 126;
             textBoxPassword.Width = this.Width - 316;
-            btnAuthenticate.Left = this.Width - 102;
+  //          btnAuthenticate.Left = this.Width - 442;
 
-            textBoxPlandocument.Height = this.Height / 4;
+//            listViewPlans.Width = this.Width - 210;
 
 
-            lblNodeID.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 3;
-            textBoxNodeID.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 16;
-
-            buttonValidatePlan.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 10;
-            buttonValidatePlan.Left = this.Width - 190;
-            btnAuthenticate.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 10;
+//            btnAuthenticate.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 10;
 
             tabControl1.Width = this.Width - 30;
 
-            tabControl1.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 70;
+//            tabControl1.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 70;
 
             tabControl1.Height = this.Height - tabControl1.Top - 48;
 
-            lblStatus.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 50;
+            //          lblStatus.Top = textBoxPlandocument.Top + textBoxPlandocument.Height + 50;
 
+
+            textBoxAuthPlanDescription.Width = this.Width - 333;
 
             textBoxHistory.Width = tabControl1.Width - 18;
             textBoxHistory.Height = tabControl1.Height - 32;
             textBoxTranscript.Width = tabControl1.Width - 18;
             textBoxTranscript.Height = tabControl1.Height - 32;
+            
 
 
 
@@ -752,6 +746,17 @@ namespace SandpiperInspector
 
             treeViewRemoteContent.Width = tabControl1.Width - 18;
             treeViewRemoteContent.Height = tabControl1.Height - 65;
+
+
+
+            treeViewPlans.Width =  Convert.ToInt32(tabControl1.Width * .3);
+            treeViewPlans.Height = tabControl1.Height - 65;
+
+            textBoxPlanDetails.Left = treeViewPlans.Right + 4;
+            textBoxPlanDetails.Width = tabControl1.Width - treeViewPlans.Width - 18;
+            textBoxPlanDetails.Height = treeViewPlans.Height;
+
+
 
             buttonNewRemoteSlice.Left = tabControl1.Width - 385;
             buttonNewRemoteSlice.Top = treeViewRemoteContent.Bottom + 8;
@@ -767,6 +772,12 @@ namespace SandpiperInspector
 
             buttonEditLocalSlice.Left = tabControl1.Width - 90;
             buttonEditLocalSlice.Top = treeViewRemoteContent.Bottom + 8;
+
+            buttonPlansNew.Left = tabControl1.Width - 130;
+            buttonPlansNew.Top = treeViewPlans.Bottom + 8;
+
+            buttonPlansDelete.Left = tabControl1.Width - 72;
+            buttonPlansDelete.Top = treeViewPlans.Bottom + 8;
 
             textBoxPlanSchema.Height = tabControl1.Height - 114;
             textBoxPlanSchema.Width = tabControl1.Width - 31;
@@ -852,6 +863,19 @@ namespace SandpiperInspector
             buttonDeleteLocalSlice.Enabled = false;
             buttonEditLocalSlice.Enabled = false;
 
+        }
+
+
+        private void updateUIplanList()
+        {
+            listBoxAuthPlans.Items.Clear();
+
+            listBoxAuthPlans.Items.Add("null plan");
+            foreach (sandpiperClient.plan p in sandpiper.localPlans)
+            {
+                listBoxAuthPlans.Items.Add(p.plan_uuid);
+            }
+        
         }
 
 
@@ -952,6 +976,7 @@ namespace SandpiperInspector
 
         private bool validatePlandocumentForUI()
         {
+            /*
             if (sandpiper.validPlandocument(textBoxPlandocument.Text))
             {
                 textBoxPlandocument.BackColor = Color.White;
@@ -963,6 +988,9 @@ namespace SandpiperInspector
                 textBoxPlandocument.BackColor = Color.OrangeRed;
                 return false;
             }
+            */
+            return true;
+
         }
 
 
@@ -1046,7 +1074,6 @@ namespace SandpiperInspector
         private void lockUIelemets()
         {
             btnAuthenticate.Enabled = false;
-            buttonValidatePlan.Enabled = false;
             buttonNewLocalSlice.Enabled = false;
             buttonNewRemoteSlice.Enabled = false;
             buttonExportSlice.Enabled = false;
@@ -1055,7 +1082,6 @@ namespace SandpiperInspector
         private void unlockUIelemets()
         {
             btnAuthenticate.Enabled = true;
-            buttonValidatePlan.Enabled = true;
             buttonNewLocalSlice.Enabled = true;
             buttonNewRemoteSlice.Enabled = true;
             buttonExportSlice.Enabled = true;
@@ -1254,7 +1280,60 @@ namespace SandpiperInspector
             return (UnmanagedMemoryStream)stream;
         }
 
+        private void listBoxAuthPlans_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string plan_uuid = listBoxAuthPlans.GetItemText(listBoxAuthPlans.SelectedItem);
 
+            if (plan_uuid == "null plan")
+            {
+                plan_uuid = "";
+                sandpiper.activePlan.plandocument_xml = "";
+                sandpiper.myRole = 1; // local client is secondary
+                textBoxAuthPlanDescription.Text = "Authenticating with a null plan should only allow access the plan-related endpoints and not content-related endpoints.";
+            }
+            else 
+            {
+                sandpiper.activePlan = sandpiper.getLocalPlan(plan_uuid);
+                if (sandpiper.activePlan != null)
+                {
+                    //textBoxAuthPlanDescription.Text = sandpiper.activePlan.local_description;
+                    sandpiper.activePlan.plandocument_xml = sandpiper.plandocumentXMLofPlan(sandpiper.activePlan);
+                    textBoxAuthPlanDescription.Text = sandpiper.activePlan.plandocument_xml;
+                    sandpiper.myRole = sandpiper.getMyRoleFromPlan(plan_uuid);
+                }
+            }
+
+
+
+        }
+
+        private async void buttonPlansNew_Click(object sender, EventArgs e)
+        {
+            // propose a new plan (posted) to the server
+
+            sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_PROPOSE_NEW;
+            sandpiper.responseTime = 0;
+
+
+            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("proposePlanAsync(" + textBoxServerBaseURL.Text + "/v1/plans/proposals/new)"); }
+            bool proposalSuccess = await sandpiper.proposePlanAsync(textBoxServerBaseURL.Text + "/v1/plans/proposals/new", sandpiper.sessionJTW, sandpiper.activePlan);
+
+            if (proposalSuccess)
+            {// she said "yes, yes. 1000 times YES!"
+
+                sandpiper.historyRecords.Add("Successful response to new plan proposal");
+            }
+            else
+            {// proposal failed
+
+                sandpiper.historyRecords.Add("Failure response to new plan proposal");
+            }
+
+            sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
+            lblStatus.Text = "";
+
+
+        }
     }
 
 }

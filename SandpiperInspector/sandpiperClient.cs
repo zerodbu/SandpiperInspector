@@ -22,7 +22,7 @@ namespace SandpiperInspector
         {
             public string token;
             public DateTime expiration;
-            public List<string> claims;
+            public List<string> resourcelist;
             public string niceFormat;
         }
 
@@ -33,6 +33,8 @@ namespace SandpiperInspector
 
         public static HttpClient client = new HttpClient();
         public JWT sessionJTW = new JWT();
+        public plan activePlan = new plan();
+        public List<plan> localPlans = new List<plan>();
         public List<grain> availableGrains = new List<grain>();
         public grain selectedGrain = new grain();
         public List<slice> remoteSlices = new List<slice>();
@@ -88,8 +90,12 @@ namespace SandpiperInspector
             REMOTE_PRI_GET_GRAINLIST = 20,
             REMOTE_PRI_GET_GRAINLIST_AWAITING = 21,
             REMOTE_PRI_GET_GRAINS = 22,
-            REMOTE_PRI_GET_GRAINS_AWAITING = 23
+            REMOTE_PRI_GET_GRAINS_AWAITING = 23,
+            REMOTE_PRI_PROPOSE_NEW = 24
         }
+
+
+
 
 
         public class loginResponse
@@ -100,31 +106,25 @@ namespace SandpiperInspector
             public string message;
         }
 
-        public class grain
+        public class JWTpayload
         {
-            public string grain_uuid;
-            public string grain_key;
-            public string grain_reference;
-            public string slice_uuid;
-            public string description;
-            public string source;
-            public string encoding;
-            public string payload;
-            public long payload_len;
-            public string localfile_name;
-
-            public void clear()
-            {
-                grain_uuid = "";
-                description = "";
-                slice_uuid = "";
-                grain_key = "";
-                source = "";
-                encoding = "";
-                payload_len = 0;
-            }
+            public string exp;
+            public string resources;
         }
 
+
+
+        public class plan
+        {
+            public string local_description;
+            public string plan_uuid;
+            public string primary_node_uuid;
+            public string secondary_node_uuid;
+            public string status;
+            public string status_message;
+            public string plandocument_xml;
+            public List<slice> subscribed_slices;
+        }
 
         public class slice
         {
@@ -149,67 +149,50 @@ namespace SandpiperInspector
         }
 
 
-        public class grainsEnvelope
+        public class grain
         {
-            public List<grain> grains;
+            public string grain_uuid;
+            public string grain_key;
+            public string grain_reference;
+            public int grain_order;
+            public string encoding;
+            public string payload;
+            public long payload_len;
+            public string slice_uuid;
+            public string description;
+            public string source;
+            public string localfile_name;
+
+            public void clear()
+            {
+                grain_uuid = "";
+                description = "";
+                slice_uuid = "";
+                grain_key = "";
+                source = "";
+                encoding = "";
+                payload_len = 0;
+            }
         }
 
-        public class grainsEnvelopeCompact
-        {
-            public List<string> grain_uuids;
-        }
-
-
-
-
-        public class grainsResponse
-        {
-            public string message;
-        }
 
         public class slicesResponse
         {
             public string message;
         }
 
-
-        //---  temporary naming bridge ------------
-        public class altSlice
+        public class grainsResponse
         {
-            public string slice_id;
-            public string slice_type;
-            public string name;
-            public string slicemetadata;
-            public string hash;
-        }
-
-        public class altGrain
-        {
-            public string id;
-            public string description;
-            public string slice_id;
-            public string grain_key;
-            public string source;
-            public string encoding;
-            public string payload;
-            public Int32 payload_len;
-        }
-
-        public class altGrainsEnvelope
-        {
-            public List<altGrain> grains;
-        }
-
-        public class altGrainsEnvelopeCompact
-        {
-            public List<string> grain_uuids;
+            public string message;
         }
 
 
+        public class proposalResponse
+        {
+            public string message;
+            public int code;
+        }
 
-
-
-        //--------------------------------------------
 
         public async Task<bool> loginAsync(string path, string username, string password, string plandocument)
         {
@@ -234,7 +217,8 @@ namespace SandpiperInspector
             {
                 HttpResponseMessage response = await client.PostAsync(path, content);
                 if (response.IsSuccessStatusCode)
-                {
+                {// http response code 200 (or similar 2xx)
+
                     string responseString = await response.Content.ReadAsStringAsync();
                     if (recordTranscript){transcriptRecords.Add(FormatJson(responseString));}
 
@@ -242,6 +226,7 @@ namespace SandpiperInspector
                     {
                         JavaScriptSerializer serializer = new JavaScriptSerializer();
                         loginResponse r = new loginResponse();
+                        JWTpayload p = new JWTpayload();
                         r = serializer.Deserialize<loginResponse>(responseString);
 
                         if (r != null)
@@ -252,8 +237,14 @@ namespace SandpiperInspector
                             {
                                 sessionJTW.niceFormat = "Valid JWT Token receied:" + Environment.NewLine + Environment.NewLine;
                                 sessionJTW.niceFormat += "---- Header ----" + Environment.NewLine + Base64Decode(chunks[0].PadRight(chunks[0].Length + (4 - chunks[0].Length % 4) % 4, '=')) + Environment.NewLine + Environment.NewLine;
-                                sessionJTW.niceFormat += "---- Payload ----" + Environment.NewLine + Base64Decode(chunks[1].PadRight(chunks[1].Length + (4 - chunks[1].Length % 4) % 4, '=')) + Environment.NewLine + Environment.NewLine;
+                                string payloadJSON = Base64Decode(chunks[1].PadRight(chunks[1].Length + (4 - chunks[1].Length % 4) % 4, '='));
+                                sessionJTW.niceFormat += "---- Payload ----" + payloadJSON + Environment.NewLine + Environment.NewLine;
                                 sessionJTW.niceFormat += "---- Signature ----" + Environment.NewLine + chunks[2] + Environment.NewLine;
+                                p = serializer.Deserialize<JWTpayload>(payloadJSON);
+
+                                sessionJTW.resourcelist = p.resources.Split(',').ToList();
+
+
                                 historyRecords.Add("Authenticated and received a JWT (" + (10 * responseTime).ToString() + "mS response time)");
                                 historyRecords.Add("    Response message: " + r.message);
                                 interactionState = (int)interactionStates.AUTHENTICATED_UPDATING_UI;
@@ -279,11 +270,16 @@ namespace SandpiperInspector
                         interactionState = (int)interactionStates.AUTHFAILED_UPDATING_UI;
                         historyRecords.Add("Authentication error parsing server JSON response:" + ex.Message);
                     }
+
                 }
                 else
                 {// something other than 200 (success) code back from the other end 
                     interactionState = (int)interactionStates.AUTHFAILED_UPDATING_UI;
-                    historyRecords.Add("Authentication error - HTTP response: " + response.ReasonPhrase);
+
+                    string responseString = await response.Content.ReadAsStringAsync();
+                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
+
+                    historyRecords.Add("Authentication error - HTTP layer: " + response.StatusCode + "; Sandpiper layer: " + responseString);
                 }
             }
             catch (Exception ex)
@@ -296,18 +292,70 @@ namespace SandpiperInspector
         }
 
 
-        public async Task<List<grain>> getGrainsAsync(string path, JWT jwt)
+        public async Task<bool> proposePlanAsync(string path, JWT jwt, plan p)
         {
+            bool returnValue = false;
 
-            grainsEnvelope responseData = new grainsEnvelope();
-            List<grain> grainsList = new List<grain>();
+            proposalResponse serverProposalResponse = new proposalResponse();
 
-            responseData.grains = grainsList;
-
+            if (recordTranscript) { transcriptRecords.Add(p.plandocument_xml); }
 
             try
             {
+                var requestData = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(path)
+                };
 
+                requestData.Headers.TryAddWithoutValidation("Authorization", String.Format("Bearer {0}", jwt.token));
+                requestData.Content = new StringContent(p.plandocument_xml, Encoding.UTF8, "application/xml");
+
+                HttpResponseMessage response = await client.SendAsync(requestData);
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseString = await response.Content.ReadAsStringAsync();
+                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
+                    JavaScriptSerializer serializer = new JavaScriptSerializer();
+                    serializer.MaxJsonLength = Int32.MaxValue;
+
+                    try
+                    {
+                        serverProposalResponse = serializer.Deserialize<proposalResponse>(responseString);
+                        historyRecords.Add("proposal/new response: " + serverProposalResponse.message);
+                    }
+                    catch (Exception ex)
+                    {
+                        historyRecords.Add("proposePlanAsync() - Local error parsing JSON response from server: " + ex.Message);
+                    }
+                }
+                else
+                {// something other than 200 (success) code back from the other end 
+                    historyRecords.Add("proposePlanAsync() - Server HTTP response:" + response.ReasonPhrase);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                historyRecords.Add("proposePlanAsync() - Local error - " + ex.Message);
+            }
+
+            return returnValue;
+        }
+
+
+
+
+
+
+
+
+        public async Task<List<grain>> getGrainsAsync(string path, string slice_uuid, JWT jwt)
+        {
+            List<grain> grainsList = new List<grain>();
+
+            try
+            {
                 var requestData = new HttpRequestMessage
                 {
                     Method = HttpMethod.Get,
@@ -316,7 +364,6 @@ namespace SandpiperInspector
 
                 requestData.Headers.TryAddWithoutValidation("Authorization", String.Format("Bearer {0}", jwt.token));
 
-
                 HttpResponseMessage response = await client.SendAsync(requestData);
                 if (response.IsSuccessStatusCode)
                 {
@@ -324,13 +371,17 @@ namespace SandpiperInspector
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 
-                    // grains response can be wrapped in "grains"
-
                     if (recordTranscript){transcriptRecords.Add(FormatJson(responseString));}
 
                     try
-                    { // json scructure includes a wrapper evelope 
-                        responseData = serializer.Deserialize<grainsEnvelope>(responseString);
+                    {
+                        grainsList= serializer.Deserialize<List<grain>>(responseString);
+
+                        //add the sliceuuid to each grain. We de-normalize here to make the grainlist differnetial comparison easier
+                        for (int i = 0; i <= grainsList.Count - 1; i++)
+                        {
+                            grainsList[i].slice_uuid = slice_uuid;
+                        }
                     }
                     catch (Exception ex)
                     {// error parsing json 
@@ -339,15 +390,14 @@ namespace SandpiperInspector
                 }
                 else
                 {// something other than 200 (success) code back from the other end 
-                    historyRecords.Add("Grains error - " + response.ReasonPhrase);
+                    historyRecords.Add("Grains error (http status code:" + response.StatusCode + ") - " + response.ReasonPhrase);
                 }
             }
             catch (Exception ex)
             {
                 historyRecords.Add("Grains error - " + ex.Message);
             }
-
-            return responseData.grains;
+            return grainsList;// responseData.grains;
         }
 
 
@@ -651,6 +701,8 @@ namespace SandpiperInspector
 
         public bool writeFilegrainToFile(sandpiperClient.grain filegrain, string cacheDir)
         {
+
+            if (filegrain.localfile_name is null) { filegrain.localfile_name = filegrain.grain_uuid; }
             
             if (filegrain.encoding == "z64")
             {
@@ -687,7 +739,7 @@ namespace SandpiperInspector
                 found = false;
                 foreach (grain gA in grainsA)
                 {
-                    if(grainsB[i].grain_uuid== gA.grain_uuid)
+                    if((grainsB[i].grain_uuid== gA.grain_uuid) && (grainsB[i].slice_uuid==gA.slice_uuid))
                     {// this grain from the "B" list was found in the "A" list - quit looking
                         found = true;
                         break;
@@ -1584,7 +1636,7 @@ namespace SandpiperInspector
 
                     if (!localSliceGrainsRecordExists(g.grain_uuid, g.slice_uuid))
                     {
-                        sqlite_cmd.CommandText = "INSERT INTO slice_grains (slice_uuid, grain_uuid,grain_order) VALUES ('" + g.slice_uuid + "','" + g.grain_uuid + "',0);";
+                        sqlite_cmd.CommandText = "INSERT INTO slice_grains (slice_uuid, grain_uuid,grain_order) VALUES ('" + g.slice_uuid + "','" + g.grain_uuid + "',"+g.grain_order.ToString()+");";
                         sqlite_cmd.ExecuteNonQuery();
                     }
                     else
@@ -1806,6 +1858,118 @@ namespace SandpiperInspector
         }
 
 
+        public List<plan> getLocalPlans()
+        {
+            List<plan> returnVal = new List<plan>();
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT plan_uuid,primary_node_uuid,secondary_node_uuid,status,status_message,local_description,created_on FROM plans order by created_on desc";
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        while (sqlite_datareader.Read())
+                        {
+                            plan p = new plan();
+                            p.plan_uuid = sqlite_datareader.GetString(0);
+                            p.primary_node_uuid= sqlite_datareader.GetString(1);
+                            p.secondary_node_uuid = sqlite_datareader.GetString(2);
+                            p.status= sqlite_datareader.GetString(3);
+                            p.status_message = sqlite_datareader.GetValue(4).ToString();
+                            p.local_description= sqlite_datareader.GetString(5);
+                            returnVal.Add(p);
+                        }
+                    }
+                }
+
+
+
+
+            }
+            return returnVal;
+        }
+
+
+        public plan getLocalPlan(string plan_uuid)
+        {
+            plan returnVal = null;
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "SELECT plan_uuid,primary_node_uuid,secondary_node_uuid,status,status_message,local_description,created_on FROM plans where plan_uuid=@param1";
+                    sqlite_cmd.Parameters.Add(new SQLiteParameter("@param1", plan_uuid));
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        if (sqlite_datareader.Read())
+                        {
+                            returnVal = new plan();
+                            returnVal.plan_uuid = sqlite_datareader.GetString(0);
+                            returnVal.primary_node_uuid = sqlite_datareader.GetString(1);
+                            returnVal.secondary_node_uuid = sqlite_datareader.GetString(2);
+                            returnVal.status = sqlite_datareader.GetString(3);
+                            returnVal.status_message = sqlite_datareader.GetValue(4).ToString();
+                            returnVal.local_description = sqlite_datareader.GetString(5);
+                        }
+                    }
+                }
+
+                if (returnVal!=null)
+                { // plan data was found
+                    returnVal.subscribed_slices = getLocalPlanSubscribedSlices(plan_uuid);
+                }
+
+            }
+            return returnVal;
+        }
+
+
+
+        public List<slice> getLocalPlanSubscribedSlices(string plan_uuid)
+        {
+            List<slice> returnVal = new List<slice>();
+
+            if (SQliteDatabaseInitialized)
+            {
+                using (SQLiteCommand sqlite_cmd = sqlite_conn.CreateCommand())
+                {
+                    sqlite_cmd.CommandText = "select slices.slice_uuid, slices.file_name ,slice_description, slice_type, slice_order from plans,slices,plan_slices,subscriptions where plans.plan_uuid = plan_slices.plan_uuid and plan_slices.slice_uuid = slices.slice_uuid and subscriptions.plan_slice_id = plan_slices.plan_slice_id and plans.plan_uuid = @param1 order by slice_order";
+                    sqlite_cmd.Parameters.Add(new SQLiteParameter("@param1", plan_uuid));
+
+                    using (SQLiteDataReader sqlite_datareader = sqlite_cmd.ExecuteReader())
+                    {
+                        while (sqlite_datareader.Read())
+                        {
+                            slice s = new slice();
+
+
+                            s.slice_uuid = sqlite_datareader.GetString(0);
+                            s.file_name = sqlite_datareader.GetString(1);
+                            s.slice_description = sqlite_datareader.GetString(2);
+                            s.slice_type = sqlite_datareader.GetString(3);
+                            s.slice_order = sqlite_datareader.GetInt32(4);
+                            returnVal.Add(s);
+                        }
+                    }
+                }
+            }
+            return returnVal;
+        }
+
+
+
+
+
+
+
+
+
+
+
 
         public string getLocalEnvironmentVariable(string name, bool createIfMssing = false, string valueIfMissing = "")
         {
@@ -1852,6 +2016,108 @@ namespace SandpiperInspector
         }
 
 
+        
+
+
+        public int getMyRoleFromPlan(string plan_uuid)
+        {
+            int role = 1;
+
+
+            return role;
+        }
+
+
+
+        public string plandocumentXMLofPlan(plan p)
+        {
+            XDocument doc = new XDocument();
+            var planElement = new XElement("Plan", new XAttribute("uuid", p.plan_uuid));
+            var primaryElement = new XElement("Primary", new XAttribute("uuid", p.primary_node_uuid));
+            planElement.Add(primaryElement);
+            var primaryInstanceElement = new XElement("Instance", new XAttribute("uuid", p.plan_uuid));
+            var softwareElement = new XElement("Software", new XAttribute("description", "SandpiperInspector"), new XAttribute("version", "1.0.0.0"));
+            primaryInstanceElement.Add(softwareElement);
+            var capabilityElement = new XElement("Capability", new XAttribute("level", "2"));
+            primaryInstanceElement.Add(capabilityElement);
+            primaryElement.Add(primaryInstanceElement);
+            var responseElement = new XElement("Response", new XAttribute("uri", "https://aps.dev"), new XAttribute("role", "Authentication"), new XAttribute("description", "sdfsdfsdf"));
+            capabilityElement.Add(responseElement);
+            var controllerElement = new XElement("Controller", new XAttribute("uuid", p.plan_uuid), new XAttribute("description", "SandpiperInspector Controller"));
+            var controllerAdminElement = new XElement("Admin", new XAttribute("contact", "Content Pro"), new XAttribute("email", "soandso@suchandsuch.com"));
+            controllerElement.Add(controllerAdminElement);
+            primaryElement.Add(controllerElement);
+            var primaryLinksElement = new XElement("Links");
+            primaryElement.Add(primaryLinksElement);
+            var poolsElement = new XElement("Pools");
+            primaryElement.Add(poolsElement);
+            var poolElement = new XElement("Pool", new XAttribute("uuid", p.plan_uuid), new XAttribute("description", "pool description"));
+            poolsElement.Add(poolElement);
+            var primaryPoolLinksElement = new XElement("Links");
+            poolElement.Add(primaryPoolLinksElement);
+            
+            
+            var slicesElement = new XElement("Slices");
+            poolElement.Add(slicesElement);
+
+
+
+                var sliceElement = new XElement("Slice", new XAttribute("uuid", "00000000-0000-4000-8000-000000000000"), new XAttribute("description", "description of available slice"));
+                slicesElement.Add(sliceElement);
+
+                var sliceLinksElement = new XElement("Links");
+                sliceElement.Add(sliceLinksElement);
+                var sliceLinksUniqueLinkElement = new XElement("UniqueLink", new XAttribute("uuid", p.plan_uuid), new XAttribute("keyfield", "auto-care-qdb-version"), new XAttribute("keyvalue", "2021-05-30"), new XAttribute("description", "slice description"));
+                sliceLinksElement.Add(sliceLinksUniqueLinkElement);
+
+
+            var communalElement = new XElement("Communal");
+            planElement.Add(communalElement);
+            var subscriptionsElement = new XElement("Subscriptions");
+            communalElement.Add(subscriptionsElement);
+
+
+
+            foreach (slice s in p.subscribed_slices)
+            {
+                var subscriptionElement = new XElement("Subscription", new XAttribute("uuid", s.slice_uuid));
+                subscriptionsElement.Add(subscriptionElement);
+            }
+
+
+            var secondaryElement = new XElement("Secondary", new XAttribute("uuid", p.secondary_node_uuid));
+            planElement.Add(secondaryElement);
+
+
+            var secondaryInstanceElement = new XElement("Instance", new XAttribute("uuid", p.plan_uuid));
+            var secondarySoftwareElement = new XElement("Software", new XAttribute("description", "SandpiperInspector"), new XAttribute("version", "1.0.0.0"));
+            secondaryInstanceElement.Add(secondarySoftwareElement);
+            var secondaryCapabilityElement = new XElement("Capability", new XAttribute("level", "2"));
+            secondaryInstanceElement.Add(secondaryCapabilityElement);
+
+            var secondaryResponseElement = new XElement("Response", new XAttribute("uri", "https://aps.dev"), new XAttribute("role", "Authentication"), new XAttribute("description", "sdfsdfsdf"));
+            secondaryCapabilityElement.Add(secondaryResponseElement);
+
+            secondaryElement.Add(secondaryInstanceElement);
+
+            var secondaryLinksElement = new XElement("Links");
+            secondaryElement.Add(secondaryLinksElement);
+
+
+            var secondaryUniqueLinkElement = new XElement("UniqueLink", new XAttribute("uuid", p.plan_uuid), new XAttribute("keyfield", "auto-care-padb-version"), new XAttribute("keyvalue", "2021-05-30"), new XAttribute("description", "Example description"));
+            secondaryLinksElement.Add(secondaryUniqueLinkElement);
+
+
+
+
+
+            doc.Add(planElement);
+
+            string xml= doc.ToString();
+            bool validPlan = validPlandocument(xml);
+
+            return xml;
+        }
 
 
 
