@@ -91,6 +91,7 @@ namespace SandpiperInspector
             sandpiper.activeSession = false;
             sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;
             pictureBoxStatus.BackColor = Color.Gray;
+            btnAuthenticate.Enabled = false;
 
 
             // hiddenHistoryTab = tabControl1.TabPages[1];
@@ -185,8 +186,8 @@ namespace SandpiperInspector
             textBoxPassword.Enabled = false;
             textBoxUsername.Enabled = false;
 
-            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("loginAsync(" + textBoxServerBaseURL.Text + "/login)"); }
-            bool loginSuccess = await sandpiper.loginAsync(textBoxServerBaseURL.Text + "/login", textBoxUsername.Text, textBoxPassword.Text, sandpiper.activePlan.plandocument_xml);
+            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("--- client POST to " + textBoxServerBaseURL.Text + "/login ---"); }
+            bool loginSuccess = await sandpiper.loginAsync(textBoxServerBaseURL.Text + "/v1/login", textBoxUsername.Text, textBoxPassword.Text, sandpiper.activePlan.plandocument_xml);
 
             if (loginSuccess)
             {
@@ -569,9 +570,9 @@ namespace SandpiperInspector
                     break;
 
 
-                case (int)sandpiperClient.interactionStates.REMOTE_PRI_PROPOSE_NEW:
+                case (int)sandpiperClient.interactionStates.REMOTE_PRI_INVOKE_NEW:
                     sandpiper.responseTime++;
-                    lblStatus.Text = "proposing new plan (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
+                    lblStatus.Text = "invoking new plan (Elapsed Time: " + (10 * sandpiper.responseTime).ToString() + "mS)";
                     break;
 
 
@@ -1214,7 +1215,7 @@ namespace SandpiperInspector
                 if (sandpiper.transcriptRecords.Count() > lastTranscriptRecorCount)
                 {
                     lastTranscriptRecorCount = sandpiper.transcriptRecords.Count();
-                    textBoxTranscript.Text = string.Join("\r\n---\r\n", sandpiper.transcriptRecords);
+                    textBoxTranscript.Text = string.Join("\r\n\r\n", sandpiper.transcriptRecords);
                 }
             }
             else
@@ -1303,7 +1304,7 @@ namespace SandpiperInspector
                 }
             }
 
-
+            btnAuthenticate.Enabled = true;
 
         }
 
@@ -1311,22 +1312,22 @@ namespace SandpiperInspector
         {
             // propose a new plan (posted) to the server
 
-            sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_PROPOSE_NEW;
+            sandpiper.interactionState = (int)sandpiperClient.interactionStates.REMOTE_PRI_INVOKE_NEW;
             sandpiper.responseTime = 0;
 
 
-            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("proposePlanAsync(" + textBoxServerBaseURL.Text + "/v1/plans/proposals/new)"); }
-            bool proposalSuccess = await sandpiper.proposePlanAsync(textBoxServerBaseURL.Text + "/v1/plans/proposals/new", sandpiper.sessionJTW, sandpiper.activePlan);
+            if (sandpiper.recordTranscript) { sandpiper.transcriptRecords.Add("--- client POST to " + textBoxServerBaseURL.Text + "/v1/plans/invoke ---"); }
+            bool proposalSuccess = await sandpiper.invokePlanAsync(textBoxServerBaseURL.Text + "/v1/plans/invoke", sandpiper.sessionJTW);
 
             if (proposalSuccess)
             {// she said "yes, yes. 1000 times YES!"
 
-                sandpiper.historyRecords.Add("Successful response to new plan proposal");
+                sandpiper.historyRecords.Add("Successful response to plan fragment invokation");
             }
             else
             {// proposal failed
 
-                sandpiper.historyRecords.Add("Failure response to new plan proposal");
+                sandpiper.historyRecords.Add("Failure response to plan fragment invocation");
             }
 
             sandpiper.interactionState = (int)sandpiperClient.interactionStates.IDLE;

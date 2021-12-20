@@ -91,7 +91,7 @@ namespace SandpiperInspector
             REMOTE_PRI_GET_GRAINLIST_AWAITING = 21,
             REMOTE_PRI_GET_GRAINS = 22,
             REMOTE_PRI_GET_GRAINS_AWAITING = 23,
-            REMOTE_PRI_PROPOSE_NEW = 24
+            REMOTE_PRI_INVOKE_NEW = 24
         }
 
 
@@ -102,8 +102,32 @@ namespace SandpiperInspector
         {
             public string token;
             public DateTime expires;
-            public string planschemaerrors;
-            public string message;
+            public sandpiperMessage message;
+        }
+
+        public class planInvokeResponse
+        {
+            public planResponse plan;
+            public sandpiperMessage message;
+            
+        }
+
+        public class planResponse
+        {
+            public string plan_uuid;
+            public string replaces_plan_uuid;
+            public string plan_description;
+            public string plan_status;
+            public string plan_status_on;
+            public string primary_approved_on;
+            public string secondary_approved_on;
+            public string payload;
+        }
+
+        public class sandpiperMessage
+        {
+            public int message_code;
+            public string message_text;
         }
 
         public class JWTpayload
@@ -208,7 +232,7 @@ namespace SandpiperInspector
                 plandocument = plandocumentEncoded
             });
 
-            if (recordTranscript) { transcriptRecords.Add(FormatJson(json)); }
+            if (recordTranscript) { transcriptRecords.Add("--- client post body ---\r\n" + FormatJson(json)); }
 
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -220,7 +244,7 @@ namespace SandpiperInspector
                 {// http response code 200 (or similar 2xx)
 
                     string responseString = await response.Content.ReadAsStringAsync();
-                    if (recordTranscript){transcriptRecords.Add(FormatJson(responseString));}
+                    if (recordTranscript){transcriptRecords.Add("--- server response JSON---\r\n" + FormatJson(responseString));}
 
                     try
                     {
@@ -246,7 +270,7 @@ namespace SandpiperInspector
 
 
                                 historyRecords.Add("Authenticated and received a JWT (" + (10 * responseTime).ToString() + "mS response time)");
-                                historyRecords.Add("    Response message: " + r.message);
+                                historyRecords.Add("    Response message: "+ r.message.message_code.ToString() + "(" + r.message.message_text + ")");
                                 interactionState = (int)interactionStates.AUTHENTICATED_UPDATING_UI;
                                 returnValue = true;
                             }
@@ -292,52 +316,53 @@ namespace SandpiperInspector
         }
 
 
-        public async Task<bool> proposePlanAsync(string path, JWT jwt, plan p)
+        public async Task<bool> invokePlanAsync(string path, JWT jwt)
         {
             bool returnValue = false;
 
-            proposalResponse serverProposalResponse = new proposalResponse();
+            planInvokeResponse serverInvokeResponse = new planInvokeResponse();
 
-            if (recordTranscript) { transcriptRecords.Add(p.plandocument_xml); }
+
+            if (recordTranscript) { transcriptRecords.Add("--- client invoked plan fragment ---\r\n"); }
 
             try
             {
                 var requestData = new HttpRequestMessage
                 {
-                    Method = HttpMethod.Post,
+                    Method = HttpMethod.Get,
                     RequestUri = new Uri(path)
                 };
 
                 requestData.Headers.TryAddWithoutValidation("Authorization", String.Format("Bearer {0}", jwt.token));
-                requestData.Content = new StringContent(p.plandocument_xml, Encoding.UTF8, "application/xml");
-
                 HttpResponseMessage response = await client.SendAsync(requestData);
                 if (response.IsSuccessStatusCode)
                 {
                     string responseString = await response.Content.ReadAsStringAsync();
-                    if (recordTranscript) { transcriptRecords.Add(FormatJson(responseString)); }
+                    if (recordTranscript) { transcriptRecords.Add("--- server response JSON ---\r\n" + FormatJson(responseString)); }
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     serializer.MaxJsonLength = Int32.MaxValue;
 
                     try
                     {
-                        serverProposalResponse = serializer.Deserialize<proposalResponse>(responseString);
-                        historyRecords.Add("proposal/new response: " + serverProposalResponse.message);
+                        serverInvokeResponse = serializer.Deserialize<planInvokeResponse>(responseString);
+                        historyRecords.Add("   response: ("+ serverInvokeResponse.message.message_code + ") " + serverInvokeResponse.message.message_text);
+
+                        returnValue = true;
                     }
                     catch (Exception ex)
                     {
-                        historyRecords.Add("proposePlanAsync() - Local error parsing JSON response from server: " + ex.Message);
+                        historyRecords.Add("invokePlanAsync() - Local error parsing JSON response from server: " + ex.Message);
                     }
                 }
                 else
                 {// something other than 200 (success) code back from the other end 
-                    historyRecords.Add("proposePlanAsync() - Server HTTP response:" + response.ReasonPhrase);
+                    historyRecords.Add("invokePlanAsync() - Server HTTP response:" + response.ReasonPhrase);
                 }
 
             }
             catch (Exception ex)
             {
-                historyRecords.Add("proposePlanAsync() - Local error - " + ex.Message);
+                historyRecords.Add("invokePlanAsync() - Local error - " + ex.Message);
             }
 
             return returnValue;

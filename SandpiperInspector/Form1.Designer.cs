@@ -301,11 +301,11 @@
             // 
             // buttonPlansNew
             // 
-            this.buttonPlansNew.Location = new System.Drawing.Point(367, 148);
+            this.buttonPlansNew.Location = new System.Drawing.Point(352, 148);
             this.buttonPlansNew.Name = "buttonPlansNew";
-            this.buttonPlansNew.Size = new System.Drawing.Size(75, 27);
+            this.buttonPlansNew.Size = new System.Drawing.Size(90, 27);
             this.buttonPlansNew.TabIndex = 1;
-            this.buttonPlansNew.Text = "New";
+            this.buttonPlansNew.Text = "Invoke New";
             this.buttonPlansNew.UseVisualStyleBackColor = true;
             this.buttonPlansNew.Click += new System.EventHandler(this.buttonPlansNew_Click);
             // 
